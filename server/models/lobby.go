@@ -1,0 +1,297 @@
+package models
+
+import (
+	"github.com/pkg/errors"
+	"log"
+	"math"
+	"math/rand"
+	"reflect"
+	"strconv"
+	"sync"
+	"time"
+	"unlock/constants"
+	"unlock/firestore"
+)
+
+type Lobby struct {
+	Broadcast                chan []byte             `json:"-" firestore:"-"`
+	Capacity                 int                     `json:"capacity" firestore:"capacity"`
+	Clients                  map[string]*Client      `json:"clients" firestore:"clients"`
+	Code                     string                  `json:"code" firestore:"code"`
+	ConnectionPoolRepository *LobbyRepository        `json:"-" firestore:"-"`
+	CurrentGameUuid          string                  `json:"currentGameUuid" firestore:"currentGameUuid"`
+	Games                    map[string]*Game        `json:"games" firestore:"games"`
+	Interrupt                chan bool               `json:"-" firestore:"-"`
+	InterruptTimeout         chan *TimeoutResult     `json:"-" firestore:"-"`
+	Owner                    string                  `json:"owner" firestore:"owner"`
+	PointsGoal               int                     `json:"pointsGoal" firestore:"pointsGoal"`
+	PreviousGameUuid         string                  `json:"previousGameUuid" firestore:"previousGameUuid"`
+	Register                 chan *Client            `json:"-" firestore:"-"`
+	RegisterWaitGroup        sync.WaitGroup          `json:"-" firestore:"-"`
+	RemainingSpriteColors    []constants.SpriteColor `json:"-" firestore:"-"`
+	StartTime                time.Time               `json:"startTime" firestore:"startTime"`
+	State                    constants.LobbyState    `json:"state" firestore:"state"`
+	Unregister               chan *Client            `json:"-" firestore:"-"`
+	UnregisterWaitGroup      sync.WaitGroup          `json:"-" firestore:"-"`
+}
+
+func NewLobby(capacity int, code string, pointsGoal int) *Lobby {
+	return &Lobby{
+		Capacity:   capacity,
+		Code:       code,
+		PointsGoal: pointsGoal,
+	}
+}
+
+type TimeoutResult struct {
+	ExecuteCallback bool
+	TimeoutType     constants.TimeoutType
+}
+
+func NewTimeoutResult(executeCallback bool, timeoutType constants.TimeoutType) *TimeoutResult {
+	return &TimeoutResult{
+		ExecuteCallback: executeCallback,
+		TimeoutType:     timeoutType,
+	}
+}
+
+func (lobby *Lobby) CurrentGame() (game *Game, exists bool) {
+	if currentGame, exists := lobby.Games[lobby.CurrentGameUuid]; exists {
+		return currentGame, true
+	}
+
+	return nil, false
+}
+
+func (lobby *Lobby) deleteInFirestore() (err error) {
+	return errors.WithStack(firestore.DeleteDocument(constants.CollectionLobbies, lobby.Code))
+}
+
+func (lobby *Lobby) GetLosers() (map[string]*Client, bool) {
+	losers := make(map[string]*Client)
+
+	for uuid, client := range lobby.Clients {
+		if client.Points < lobby.PointsGoal {
+			losers[uuid] = client
+		}
+	}
+
+	return losers, len(losers) > 0
+}
+
+func (lobby *Lobby) GetWinners() (map[string]*Client, bool) {
+	winners := make(map[string]*Client)
+
+	for uuid, client := range lobby.Clients {
+		if client.Points >= lobby.PointsGoal {
+			winners[uuid] = client
+		}
+	}
+
+	return winners, len(winners) > 0
+}
+
+func (lobby *Lobby) init(connectionPoolRepository *LobbyRepository) {
+	lobby.Broadcast = make(chan []byte, 128)
+	lobby.Clients = make(map[string]*Client)
+	lobby.ConnectionPoolRepository = connectionPoolRepository
+	lobby.Games = make(map[string]*Game)
+	lobby.Interrupt = make(chan bool, 8)
+	lobby.InterruptTimeout = make(chan *TimeoutResult, 8)
+	lobby.State = constants.LobbyStatePending
+	lobby.Register = make(chan *Client, 32)
+	lobby.RemainingSpriteColors = make([]constants.SpriteColor, 10)
+	copy(lobby.RemainingSpriteColors, constants.SpriteColors)
+	lobby.Unregister = make(chan *Client, 32)
+}
+
+func (lobby *Lobby) InterruptTimeouts() {
+	for _, timeoutType := range constants.TimeoutTypes {
+		result := NewTimeoutResult(false, timeoutType)
+
+		select {
+		case lobby.InterruptTimeout <- result:
+		default:
+		}
+	}
+}
+
+func (lobby *Lobby) NextGame() (err error) {
+	var previousSceneKey constants.SceneKey
+
+	if previousGame, exists := lobby.Games[lobby.CurrentGameUuid]; exists {
+		lobby.PreviousGameUuid = previousGame.Uuid
+		previousSceneKey = previousGame.SceneKey
+	}
+
+	var sceneKey constants.SceneKey
+	gameKeysLength := len(constants.GameKeyMap) + 1
+
+	for sceneKey == "" || previousSceneKey == sceneKey {
+		sceneKey = constants.GameKeyMap[strconv.Itoa(rand.Intn(gameKeysLength))]
+	}
+
+	game, err := NewGame(sceneKey)
+	if err != nil {
+		return err
+	}
+
+	lobby.CurrentGameUuid = game.Uuid
+	lobby.Games[game.Uuid] = game
+
+	return lobby.PushToFirestore()
+}
+
+func (lobby *Lobby) PushToFirestore() (err error) {
+	return errors.WithStack(firestore.SetDocument(constants.CollectionLobbies, lobby.Code, lobby))
+}
+
+func (lobby *Lobby) start() {
+	defer func() {
+		if r := recover(); r != nil {
+			err := firestore.DeleteDocument(constants.CollectionLobbies, lobby.Code)
+			if err != nil {
+				log.Println(err)
+			}
+		}
+
+		lobby.InterruptTimeouts()
+
+		close(lobby.Broadcast)
+		close(lobby.Interrupt)
+		close(lobby.InterruptTimeout)
+		close(lobby.Register)
+		close(lobby.Unregister)
+	}()
+
+LobbyLoop:
+	for {
+		select {
+
+		case message := <-lobby.Broadcast:
+			for _, client := range lobby.Clients {
+				select {
+				case client.Channel <- message:
+				default:
+					log.Println("Communication problem with client " + client.Uuid)
+				//	close(client.Channel)
+				//	delete(lobby.Clients, uuid)
+				}
+			}
+
+		case _ = <-lobby.Interrupt:
+			break LobbyLoop
+
+		case client := <-lobby.Register:
+			lobby.Clients[client.Uuid] = client
+
+			colorIndex := rand.Intn(len(lobby.RemainingSpriteColors))
+			color := lobby.RemainingSpriteColors[colorIndex]
+			lobby.RemainingSpriteColors = append(lobby.RemainingSpriteColors[:colorIndex], lobby.RemainingSpriteColors[colorIndex+1:]...)
+			client.SpriteColor = color
+
+			if len(lobby.Clients) == 1 {
+				lobby.Owner = client.Uuid
+			}
+
+			lobby.RegisterWaitGroup.Done()
+
+		case client := <-lobby.Unregister:
+			if _, exists := lobby.Clients[client.Uuid]; exists {
+				lobby.RemainingSpriteColors = append(lobby.RemainingSpriteColors, client.SpriteColor)
+				delete(lobby.Clients, client.Uuid)
+				close(client.Channel)
+
+				if lobby.Owner == client.Uuid && len(lobby.Clients) > 0 {
+					lobby.Owner = lobby.Clients[reflect.ValueOf(lobby.Clients).MapKeys()[0].String()].Uuid
+				}
+			}
+
+			lobby.UnregisterWaitGroup.Done()
+		}
+	}
+}
+
+func (lobby *Lobby) Timeout(timeoutType constants.TimeoutType, second int, runnable func() error) {
+	go func() {
+		executeCallback := true
+
+	TimeoutLoop:
+		for timeout := time.After(time.Duration(second) * time.Second); ; {
+			select {
+			case <-timeout:
+				break TimeoutLoop
+
+			case result := <-lobby.InterruptTimeout:
+				if result == nil {
+					// Lobby is being destroyed and result reference might be erased
+					executeCallback = false
+					break TimeoutLoop
+				}
+
+				if result.TimeoutType == timeoutType {
+					executeCallback = result.ExecuteCallback
+					break TimeoutLoop
+				}
+			}
+		}
+
+		if !executeCallback {
+			return
+		}
+
+		err := runnable()
+		if err != nil {
+			log.Println(err)
+		}
+	}()
+}
+
+func (lobby *Lobby) TimeoutTick(timeoutType constants.TimeoutType, second int, runnable func() error) {
+	ticker := time.NewTicker(100 * time.Millisecond)
+	startTime := time.Now()
+	millis := float64(1000 * second)
+
+	go func() {
+		executeCallback := true
+
+	TimeoutLoop:
+		for timeout := time.After(time.Duration(second) * time.Second); ; {
+			select {
+			case <-timeout:
+				break TimeoutLoop
+
+			case <-ticker.C:
+				percentage := math.Max(0, 100*(1-(float64(time.Since(startTime).Milliseconds())/millis)))
+
+				err := NewPacketServerCountdown(second, percentage).Send(lobby)
+				if err != nil {
+					log.Println(err)
+				}
+
+			case result := <-lobby.InterruptTimeout:
+				if result == nil {
+					// Lobby is being destroyed and result reference might be erased
+					executeCallback = false
+					break TimeoutLoop
+				}
+
+				if result.TimeoutType == timeoutType {
+					executeCallback = result.ExecuteCallback
+					break TimeoutLoop
+				}
+			}
+		}
+
+		ticker.Stop()
+
+		if !executeCallback {
+			return
+		}
+
+		err := runnable()
+		if err != nil {
+			log.Println(err)
+		}
+	}()
+}
