@@ -1,7 +1,7 @@
 package firestore
 
 import (
-	firestore "cloud.google.com/go/firestore"
+	"cloud.google.com/go/firestore"
 	"context"
 	"github.com/pkg/errors"
 )

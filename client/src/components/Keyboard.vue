@@ -61,7 +61,7 @@
           ref="keySpace"
           class="ml-1 mr-1 "
           block
-          :style="{'border': keysAvailable.right ? '#00C853 2px solid' : undefined}"
+          :style="{'border': keysAvailable.space ? '#00C853 2px solid' : undefined}"
       >
         <v-icon
             dark

@@ -8,15 +8,17 @@ import (
 
 type PacketServerGameWait struct {
 	Packet
+	Initialisation  bool            `json:"initialisation"`
 	Points          map[string]int  `json:"points"`
 	PreviousWinners map[string]bool `json:"previousWinners"`
 }
 
-func NewPacketServerGameWait() *PacketServerGameWait {
+func NewPacketServerGameWait(initialisation bool) *PacketServerGameWait {
 	return &PacketServerGameWait{
 		Packet: Packet{
 			Label: constants.PacketServerGameWait,
 		},
+		Initialisation: initialisation,
 		Points:          make(map[string]int),
 		PreviousWinners: make(map[string]bool),
 	}
@@ -47,7 +49,7 @@ func (packet *PacketServerGameWait) Send(lobby *Lobby) (err error) {
 		return err
 	}
 
-	lobby.TimeoutTick(constants.TimeoutTypeGameWait, constants.TimeoutDurationGameWait, func() (err error) {
+	lobby.TimeoutTickCountdown(constants.TimeoutDurationGameWait, func() (err error) {
 		return NewPacketServerGameStart().Send(lobby)
 	})
 

@@ -11,7 +11,17 @@
           v-if="lobby"
           class="overline ml-auto"
       >
-        [{{ lobby.getPlayers().length }} / {{ lobby.capacity }}]
+        <v-tooltip right>
+          <template v-slot:activator="{ on, attrs }">
+            <span
+                v-bind="attrs"
+                v-on="on"
+            >
+              [{{ lobby.getPlayers().length }} / {{ lobby.capacity }}]
+            </span>
+          </template>
+          {{ $t('settings.capacity') }}
+        </v-tooltip>
       </span>
     </v-card-title>
 
@@ -32,9 +42,38 @@
                   :style="{ 'background-color': spriteColorCodes[player.spriteColor].web }"
               />
 
-              {{ player.name || player.uuid.substring(0, 20) }}
+              <div
+                  style="max-width: 120px; text-overflow: ellipsis; overflow-x: hidden"
+              >
+                {{ player.name || player.uuid.substring(0, 20) }}
+              </div>
             </v-list-item-title>
           </v-list-item-content>
+
+          <v-list-item-icon
+              v-if="showPreviousWinners(player.uuid)"
+              class="ml-0 mr-0"
+          >
+            <v-tooltip top>
+              <template v-slot:activator="{ on, attrs }">
+                <v-icon
+                    color="green"
+                    v-bind="attrs"
+                    v-on="on"
+                >
+                  mdi-numeric-positive-1
+                </v-icon>
+              </template>
+              {{ $t('settings.winner') }}
+            </v-tooltip>
+          </v-list-item-icon>
+
+          <v-divider
+              v-if="showPreviousWinners(player.uuid)"
+              class="ml-2 mr-2 mt-3 mb-3"
+              inset
+              vertical
+          />
 
           <v-list-item-icon class="ml-0 mr-0">
             <span class="mr-1">{{ player.points }}</span>
@@ -84,7 +123,10 @@
 </template>
 
 <script>
+import GameStates from '../constants/game-states'
+import LobbyStates from '../constants/lobby-states'
 import SpriteColorCodes from '../constants/sprite-color-codes'
+import store from '../services/store';
 
 export default {
   data: () => {
@@ -95,10 +137,22 @@ export default {
   },
 
   computed: {
+    game() {
+      return this.$store.state.game
+    },
+
     lobby() {
       return this.$store.state.lobby
     }
   },
+
+  methods: {
+    showPreviousWinners(uuid) {
+      return this.lobby && this.lobby.state === LobbyStates.STARTED
+          && this.game && this.game.state === GameStates.STARTING
+          && !!store.state.previousWinners[uuid]
+    }
+  }
 }
 </script>
 

@@ -47,7 +47,7 @@ export default class EndScene extends Scene {
     SceneUtils.createBackgroundPositioned(this, this.sceneHeight, 'dungeon-mountains', 'dungeon-mountains', 2, 1)
     SceneUtils.createBackgroundPositioned(this, this.sceneHeight, 'dungeon-plateau', 'dungeon-plateau', 2, 1)
     SceneUtils.createBackgroundPositioned(this, this.sceneHeight, 'dungeon-end-wall', 'dungeon-end-wall', 2, 1)
-    SceneUtils.createBackgroundPositioned(this, this.sceneHeight, 'dungeon-ceil', 'dungeon-ceil', 2, 1, 2)
+    SceneUtils.createBackgroundPositioned(this, this.sceneHeight, 'dungeon-ceil', 'dungeon-ceil', 2, 1, null, 2)
     SceneUtils.createBackgroundPositioned(this, this.sceneHeight, 'dungeon-ground-bottom', 'dungeon-ground-bottom', 2, 1)
     SceneUtils.createBackgroundPositioned(this, this.sceneHeight, 'dungeon-ground-middle', 'dungeon-ground-middle', 2, 1)
     SceneUtils.createBackgroundPositioned(this, this.sceneHeight, 'dungeon-ground-top', 'dungeon-ground-top', 2, 1)
@@ -86,7 +86,7 @@ export default class EndScene extends Scene {
 
     // Sprites
 
-    const winner = Object.values(this.winners)[0]
+    const winner = this.winners ? Object.values(this.winners)[0] : store.state.client
     this.axolotl = new Axolotl(this, 200, this.sceneHeight - 750, 'axolotl', winner.name, winner.spriteColor).setDepth(3)
     this.axolotl.setMotion({direction: SpriteDirections.RIGHT, jumping: true})
     this.axolotl.setOrigin(0, 0)
@@ -140,7 +140,7 @@ export default class EndScene extends Scene {
 
     let axolotl, x, y
 
-    for (let loser of Object.values(this.losers)) {
+    for (let loser of this.losers ? Object.values(this.losers) : []) {
       x = availablePlaces.get(loser.points).pop()
       y = this.sceneTop + (600 + 100) * loser.points - 175
 
@@ -289,7 +289,7 @@ export default class EndScene extends Scene {
       }, this)
 
       this.time.delayedCall(timeOffset + 5500, () => {
-        this.cameras.main.pan(this.sceneWidthMiddle, 300, 1500 * store.state.lobby.pointsGoal);
+        this.cameras.main.pan(this.sceneWidthMiddle, 300, 1500 * store.state.lobby.pointsGoal)
       }, this)
     }
 

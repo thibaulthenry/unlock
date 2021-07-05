@@ -1,10 +1,15 @@
 <template>
   <v-row style="width: 100%; height: 100%" class="d-flex justify-center">
-    <v-col v-if="connected && lobby && lobby.code" class="d-flex justify-center align-center">
-      <Game ref="game"/>
-    </v-col>
+    <transition
+        name="fade"
+        mode="out-in"
+    >
+      <v-col v-if="connected && lobby && lobby.code" class="d-flex justify-center align-center">
+        <Game ref="game"/>
+      </v-col>
+    </transition>
 
-    <v-col v-else class="d-flex align-center flex-column">
+    <v-col v-if="!(connected && lobby && lobby.code)" class="d-flex align-center flex-column">
       <v-progress-linear
           color="deep-purple accent-4"
           indeterminate
@@ -26,8 +31,6 @@ import store from '../../services/store'
 
 export default {
   components: {Game},
-
-  transition: 'fade',
 
   data: () => {
     return {
@@ -73,11 +76,23 @@ export default {
   },
 
   async beforeRouteEnter(to, from, next) {
-    const lobbyCode = to.params.code
+    let paramLobbyCode = to.params.code
 
-    if (!lobbyCode) {
+    if (!paramLobbyCode || typeof paramLobbyCode !== 'string') {
       await store.dispatch('notifyInfo', i18n.t('snackbar.error.lobbyCodeMissing'))
       next('/')
+      return
+    }
+
+    let lobbyCode = paramLobbyCode.toLowerCase()
+
+    if (lobbyCode.length > 300) {
+      lobbyCode = lobbyCode.substr(0, 300)
+      await store.dispatch('notifyInfo', i18n.t('snackbar.info.lobbyCodeOverflow'))
+    }
+
+    if (paramLobbyCode !== lobbyCode) {
+      next(`/lobbies/${lobbyCode}`)
       return
     }
 
@@ -110,6 +125,8 @@ export default {
   },
 
   mounted() {
+    this.$store.commit('SET_FOOTER_MINIMIZED', {footerMinimized: false})
+
     this.connectionTask = setInterval(() => {
       if (!this.$store.state.lobby?.code) {
         return
@@ -170,4 +187,13 @@ export default {
 </script>
 
 <style scoped>
+.fade-enter-active, .fade-leave-active {
+  transition-duration: 1s;
+  transition-property: opacity;
+  transition-timing-function: ease;
+}
+
+.fade-enter, .fade-leave-active {
+  opacity: 0
+}
 </style>

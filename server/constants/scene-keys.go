@@ -5,11 +5,11 @@ type SceneKey string
 const (
 	SceneKeyGameFallingApples   SceneKey = "GameFallingApples"
 	SceneKeyGameSpaceVegetables SceneKey = "GameSpaceVegetables"
-	SceneKeyLobby               SceneKey = "Lobby"
-	SceneKeyPreGame             SceneKey = "PreGame"
+	SceneKeyGameStarWars        SceneKey = "GameStarWars"
 )
 
 var GameKeyMap = map[string]SceneKey{
 	"0": SceneKeyGameFallingApples,
 	"1": SceneKeyGameSpaceVegetables,
+	"2": SceneKeyGameStarWars,
 }

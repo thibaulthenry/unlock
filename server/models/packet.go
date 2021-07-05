@@ -50,8 +50,8 @@ func HandlePacket(client *Client, payload []byte) (err error) {
 
 		return packet.Receive(client)
 
-	case constants.PacketClientSpaceSceneMovement:
-		var packet PacketClientSpaceSceneMovement
+	case constants.PacketClientSceneStarWarsCollect:
+		var packet PacketClientSceneStarWarsCollect
 
 		err = json.Unmarshal(payload, &packet)
 		if err != nil {

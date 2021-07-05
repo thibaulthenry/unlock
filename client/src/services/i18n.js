@@ -19,25 +19,33 @@ const messages = {
       },
     },
     display: {
+      buttons: {
+        collapse: 'Collapse information panel',
+        expand: 'Expand information panel',
+        musicOff: 'Mute background music',
+        musicOn: 'Play background music',
+        quit: 'Double-click to leave the game',
+      },
       names: {
         GameFallingApples: 'Falling Apples',
-        GameSpaceVegetables: 'Space Vegetables'
+        GameSpaceVegetables: 'Space Vegetables',
+        GameStarWars: 'Star Wars'
       },
       tips: {
         lobby: {
-          pending: 'The owner of the lobby is the only one who can start the game if there are at least two players.\nIf the lobby is full, the game will start automatically',
+          pending: 'The owner of the lobby is the only one who can start the game if there are at least two players',
           starting: 'Players can still join the lobby.\n{slots} slots left',
           startingFull: 'Lobby is full, no slot left',
           startingImminent: 'Lobby is locked.\nThe game will start in a few seconds'
         },
         game: {
-          GameFallingApples: 'Collect 7 apples before other players by moving your mouse',
-          GameSpaceVegetables: 'Shoot the central vegetable by clicking the left button and dragging mouse'
+          GameFallingApples: 'Collect 7 apples before other players',
+          GameSpaceVegetables: 'Shoot the central vegetable',
+          GameStarWars: 'Collect 6 stars before other players',
         }
       }
     },
     errors: {
-      overflow: 'At most 20 characters long',
       required: 'Required field'
     },
     languages: {
@@ -57,10 +65,12 @@ const messages = {
       }
     },
     settings: {
+      capacity: 'Lobby capacity',
       ladder: 'Leaderboard',
       name: 'Player nickname',
       owner: 'Lobby owner',
-      points: 'Keys'
+      points: 'Keys',
+      winner: 'Won last game'
     },
     snackbar: {
       error: {
@@ -75,6 +85,7 @@ const messages = {
         packetsLost: 'Some information packets are unreadable'
       },
       info: {
+        lobbyCodeOverflow: 'Lobby code was shortened because it exceeded 300 characters',
         lobbyEmpty: 'All players have left the game',
       }
     }
@@ -93,25 +104,33 @@ const messages = {
       },
     },
     display: {
+      buttons: {
+        collapse: 'Réduire le panneau d\'informations',
+        expand: 'Développer le panneau d\'informations',
+        musicOff: 'Couper la musique d\'ambiance',
+        musicOn: 'Jouer la musique d\'ambiance',
+        quit: 'Double-cliquer pour quitter la partie',
+      },
       names: {
         GameFallingApples: 'Chute de pommes',
-        GameSpaceVegetables: 'Légumes de l\'espace'
+        GameSpaceVegetables: 'Légumes de l\'espace',
+        GameStarWars: 'Guerre des étoiles'
       },
       tips: {
         lobby: {
-          pending: 'Le propriétaire du lobby est le seul à pouvoir démarrer la partie s\'il y a au moins deux joueurs.\nSi le lobby est plein, la partie démarrera automatiquement',
+          pending: 'Le propriétaire du lobby est le seul à pouvoir démarrer la partie s\'il y a au moins deux joueurs',
           starting: 'Des joueurs peuvent encore rejoindre le lobby.\n{slots} places restantes',
           startingFull: 'Le lobby est complet, aucune place restante',
           startingImminent: 'Le lobby est verrouillé.\nDémarrage du jeu dans quelques secondes'
         },
         game: {
-          GameFallingApples: 'Récoltez 7 pommes avant les autres joueurs en déplaçant votre souris',
-          GameSpaceVegetables: 'Tirez pour éliminer le légume central en cliquant sur la touche gauche de votre souris et en la déplaçant',
+          GameFallingApples: 'Récoltez 7 pommes avant les autres joueurs',
+          GameSpaceVegetables: 'Tirez pour éliminer le légume central',
+          GameStarWars: 'Récoltez 6 étoiles avant les autres joueurs'
         }
       }
     },
     errors: {
-      overflow: 'Au maximum 20 caractères',
       required: 'Champ requis'
     },
     languages: {
@@ -131,10 +150,12 @@ const messages = {
       }
     },
     settings: {
+      capacity: 'Capacité du lobby',
       ladder: 'Classement',
       name: 'Pseudo de joueur',
       owner: 'Propriétaire du lobby',
-      points: 'Clefs'
+      points: 'Clefs',
+      winner: 'Gagnant de la partie précédente'
     },
     snackbar: {
       error: {
@@ -149,6 +170,7 @@ const messages = {
         packetsLost: 'Certains paquets d\'information sont illisibles'
       },
       info: {
+        lobbyCodeOverflow: 'Le code du lobby a été raccourci car il dépassait les 300 caractères',
         lobbyEmpty: 'Tous les joueurs ont quitté la partie'
       }
     }

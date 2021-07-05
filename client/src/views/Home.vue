@@ -2,71 +2,76 @@
   <v-container fluid fill-height class="pa-0">
     <v-row class="d-flex justify-center">
       <v-col cols="12" sm="8" md="6" lg="4" xl="3">
-        <v-row class="d-flex justify-center ma-0">
-          <v-carousel
-              class="carousel"
-              height="350px"
-              hide-delimiters
-              cycle
-          >
-            <v-carousel-item
-                v-for="(item,i) in items"
-                :key="i"
-                :src="item.src"
-            />
-          </v-carousel>
-        </v-row>
-
-        <v-row justify="center" class="pa-0 mt-15">
-          <v-col cols="12" md="5">
-            <v-btn
-                :loading="loadingJoin"
-                :color="'#BB8600'"
-                block
-                dark
-                @click="join"
+        <v-form ref="form" v-model="validForm" @submit.prevent="">
+          <v-row class="d-flex justify-center ma-0">
+            <v-carousel
+                class="carousel"
+                height="350px"
+                hide-delimiters
+                cycle
             >
-              {{ $t('buttons.lobby.join') }}
-            </v-btn>
-          </v-col>
+              <v-carousel-item
+                  v-for="(item,i) in items"
+                  :key="i"
+                  :src="item.src"
+              />
+            </v-carousel>
+          </v-row>
 
-          <v-col cols="12" md="5">
-            <v-btn
-                :loading="loadingSpectate"
-                :color="'#BB8600'"
-                block
-                dark
-                disabled
-                @click="spectate"
-            >
-              {{ $t('buttons.lobby.spectate') }}
-            </v-btn>
-          </v-col>
-        </v-row>
+          <v-row justify="center" class="pa-0">
+            <v-col cols="12" md="8">
+              <v-btn
+                  :loading="loadingJoin"
+                  :color="'#BB8600'"
+                  small
+                  block
+                  dark
+                  type="submit"
+                  @click="join"
+                  @submit="join"
+              >
+                {{ $t('buttons.lobby.join') }}
+              </v-btn>
+            </v-col>
 
-        <v-row class="d-flex justify-center mt-5">
-          <v-col cols="12" md="8">
-            <v-form ref="form" v-model="validForm" @submit.prevent="">
+            <!-- <v-col cols="12" md="5">-->
+            <!--   <v-btn-->
+            <!--       :loading="loadingSpectate"-->
+            <!--       :color="'#BB8600'"-->
+            <!--       block-->
+            <!--       dark-->
+            <!--       disabled-->
+            <!--       @click="spectate"-->
+            <!--   >-->
+            <!--     {{ $t('buttons.lobby.spectate') }}-->
+            <!--   </v-btn>-->
+            <!-- </v-col>-->
+          </v-row>
+
+          <v-row class="d-flex justify-center mt-5">
+            <v-col cols="12" md="8">
               <v-text-field
                   v-model="lobbyCode"
                   :label="$t('buttons.lobby.code')"
                   :rules="[value => !!value || $t('errors.required')]"
                   :disabled="loadingCreate || loadingJoin || loadingSpectate"
+                  :counter="(lobbyCode && lobbyCode.length > 200) ? 300 : undefined"
+                  maxlength="300"
                   clearable
                   outlined
                   rounded
                   dark
               />
-            </v-form>
-          </v-col>
-        </v-row>
+            </v-col>
+          </v-row>
+        </v-form>
       </v-col>
     </v-row>
   </v-container>
 </template>
 
 <script>
-import Lobby from "../models/data/lobby"
+import Lobby from '../models/data/lobby'
 
 export default {
   data() {
@@ -106,12 +111,14 @@ export default {
           })
           .catch(() => this.$store.dispatch('notifyError', this.$t('snackbar.error.connectionLost')))
           .finally(() => this.loadingJoin = false)
-    },
-
-    spectate() {
-
     }
-  }
+  },
+
+  watch: {
+    lobbyCode() {
+      this.lobbyCode = typeof this.lobbyCode === 'string' ? this.lobbyCode.toLowerCase() : this.lobbyCode
+    }
+  },
 }
 </script>
 

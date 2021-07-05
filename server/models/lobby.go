@@ -1,6 +1,7 @@
 package models
 
 import (
+	"github.com/google/uuid"
 	"github.com/pkg/errors"
 	"log"
 	"math"
@@ -22,7 +23,7 @@ type Lobby struct {
 	CurrentGameUuid          string                  `json:"currentGameUuid" firestore:"currentGameUuid"`
 	Games                    map[string]*Game        `json:"games" firestore:"games"`
 	Interrupt                chan bool               `json:"-" firestore:"-"`
-	InterruptTimeout         chan *TimeoutResult     `json:"-" firestore:"-"`
+	InterruptTimeouts        map[string]chan bool    `json:"-" firestore:"-"`
 	Owner                    string                  `json:"owner" firestore:"owner"`
 	PointsGoal               int                     `json:"pointsGoal" firestore:"pointsGoal"`
 	PreviousGameUuid         string                  `json:"previousGameUuid" firestore:"previousGameUuid"`
@@ -43,18 +44,6 @@ func NewLobby(capacity int, code string, pointsGoal int) *Lobby {
 	}
 }
 
-type TimeoutResult struct {
-	ExecuteCallback bool
-	TimeoutType     constants.TimeoutType
-}
-
-func NewTimeoutResult(executeCallback bool, timeoutType constants.TimeoutType) *TimeoutResult {
-	return &TimeoutResult{
-		ExecuteCallback: executeCallback,
-		TimeoutType:     timeoutType,
-	}
-}
-
 func (lobby *Lobby) CurrentGame() (game *Game, exists bool) {
 	if currentGame, exists := lobby.Games[lobby.CurrentGameUuid]; exists {
 		return currentGame, true
@@ -70,9 +59,9 @@ func (lobby *Lobby) deleteInFirestore() (err error) {
 func (lobby *Lobby) GetLosers() (map[string]*Client, bool) {
 	losers := make(map[string]*Client)
 
-	for uuid, client := range lobby.Clients {
+	for clientUuid, client := range lobby.Clients {
 		if client.Points < lobby.PointsGoal {
-			losers[uuid] = client
+			losers[clientUuid] = client
 		}
 	}
 
@@ -82,9 +71,9 @@ func (lobby *Lobby) GetLosers() (map[string]*Client, bool) {
 func (lobby *Lobby) GetWinners() (map[string]*Client, bool) {
 	winners := make(map[string]*Client)
 
-	for uuid, client := range lobby.Clients {
+	for clientUuid, client := range lobby.Clients {
 		if client.Points >= lobby.PointsGoal {
-			winners[uuid] = client
+			winners[clientUuid] = client
 		}
 	}
 
@@ -97,7 +86,7 @@ func (lobby *Lobby) init(connectionPoolRepository *LobbyRepository) {
 	lobby.ConnectionPoolRepository = connectionPoolRepository
 	lobby.Games = make(map[string]*Game)
 	lobby.Interrupt = make(chan bool, 8)
-	lobby.InterruptTimeout = make(chan *TimeoutResult, 8)
+	lobby.InterruptTimeouts = make(map[string]chan bool)
 	lobby.State = constants.LobbyStatePending
 	lobby.Register = make(chan *Client, 32)
 	lobby.RemainingSpriteColors = make([]constants.SpriteColor, 10)
@@ -105,12 +94,10 @@ func (lobby *Lobby) init(connectionPoolRepository *LobbyRepository) {
 	lobby.Unregister = make(chan *Client, 32)
 }
 
-func (lobby *Lobby) InterruptTimeouts() {
-	for _, timeoutType := range constants.TimeoutTypes {
-		result := NewTimeoutResult(false, timeoutType)
-
+func (lobby *Lobby) InterruptAllTimeouts() {
+	for _, channel := range lobby.InterruptTimeouts {
 		select {
-		case lobby.InterruptTimeout <- result:
+		case channel <- false:
 		default:
 		}
 	}
@@ -155,11 +142,10 @@ func (lobby *Lobby) start() {
 			}
 		}
 
-		lobby.InterruptTimeouts()
+		lobby.InterruptAllTimeouts()
 
 		close(lobby.Broadcast)
 		close(lobby.Interrupt)
-		close(lobby.InterruptTimeout)
 		close(lobby.Register)
 		close(lobby.Unregister)
 	}()
@@ -174,8 +160,6 @@ LobbyLoop:
 				case client.Channel <- message:
 				default:
 					log.Println("Communication problem with client " + client.Uuid)
-				//	close(client.Channel)
-				//	delete(lobby.Clients, uuid)
 				}
 			}
 
@@ -212,7 +196,10 @@ LobbyLoop:
 	}
 }
 
-func (lobby *Lobby) Timeout(timeoutType constants.TimeoutType, second int, runnable func() error) {
+func (lobby *Lobby) Timeout(second int, runnable func() error) (timeoutUuid string) {
+	timeoutUuid = uuid.NewString()
+	lobby.InterruptTimeouts[timeoutUuid] = make(chan bool, 8)
+
 	go func() {
 		executeCallback := true
 
@@ -222,19 +209,13 @@ func (lobby *Lobby) Timeout(timeoutType constants.TimeoutType, second int, runna
 			case <-timeout:
 				break TimeoutLoop
 
-			case result := <-lobby.InterruptTimeout:
-				if result == nil {
-					// Lobby is being destroyed and result reference might be erased
-					executeCallback = false
-					break TimeoutLoop
-				}
-
-				if result.TimeoutType == timeoutType {
-					executeCallback = result.ExecuteCallback
-					break TimeoutLoop
-				}
+			case executeCallback = <-lobby.InterruptTimeouts[timeoutUuid]:
+				break TimeoutLoop
 			}
 		}
+
+		close(lobby.InterruptTimeouts[timeoutUuid])
+		delete(lobby.InterruptTimeouts, timeoutUuid)
 
 		if !executeCallback {
 			return
@@ -245,53 +226,58 @@ func (lobby *Lobby) Timeout(timeoutType constants.TimeoutType, second int, runna
 			log.Println(err)
 		}
 	}()
+
+	return timeoutUuid
 }
 
-func (lobby *Lobby) TimeoutTick(timeoutType constants.TimeoutType, second int, runnable func() error) {
-	ticker := time.NewTicker(100 * time.Millisecond)
+func (lobby *Lobby) TimeoutTick(timeoutSeconds int, timeoutRunnable func() error, tickMillis int, tickRunnable func(startTime time.Time) error) (timeoutUuid string) {
+	timeoutUuid = uuid.NewString()
+	lobby.InterruptTimeouts[timeoutUuid] = make(chan bool, 8)
+	ticker := time.NewTicker(time.Duration(tickMillis) * time.Millisecond)
 	startTime := time.Now()
-	millis := float64(1000 * second)
 
 	go func() {
 		executeCallback := true
 
 	TimeoutLoop:
-		for timeout := time.After(time.Duration(second) * time.Second); ; {
+		for timeout := time.After(time.Duration(timeoutSeconds) * time.Second); ; {
 			select {
 			case <-timeout:
 				break TimeoutLoop
 
 			case <-ticker.C:
-				percentage := math.Max(0, 100*(1-(float64(time.Since(startTime).Milliseconds())/millis)))
-
-				err := NewPacketServerCountdown(second, percentage).Send(lobby)
+				err := tickRunnable(startTime)
 				if err != nil {
 					log.Println(err)
 				}
 
-			case result := <-lobby.InterruptTimeout:
-				if result == nil {
-					// Lobby is being destroyed and result reference might be erased
-					executeCallback = false
-					break TimeoutLoop
-				}
-
-				if result.TimeoutType == timeoutType {
-					executeCallback = result.ExecuteCallback
-					break TimeoutLoop
-				}
+			case executeCallback = <-lobby.InterruptTimeouts[timeoutUuid]:
+				break TimeoutLoop
 			}
 		}
 
+		close(lobby.InterruptTimeouts[timeoutUuid])
+		delete(lobby.InterruptTimeouts, timeoutUuid)
 		ticker.Stop()
 
 		if !executeCallback {
 			return
 		}
 
-		err := runnable()
+		err := timeoutRunnable()
 		if err != nil {
 			log.Println(err)
 		}
 	}()
+
+	return timeoutUuid
+}
+
+func (lobby *Lobby) TimeoutTickCountdown(timeoutSeconds int, timeoutRunnable func() error) (timeoutUuid string) {
+	millis := float64(1000 * timeoutSeconds)
+
+	return lobby.TimeoutTick(timeoutSeconds, timeoutRunnable, 100, func(startTime time.Time) (err error) {
+		percentage := math.Max(0, 100*(1-(float64(time.Since(startTime).Milliseconds())/millis)))
+		return NewPacketServerCountdown(timeoutSeconds, percentage).Send(lobby)
+	})
 }

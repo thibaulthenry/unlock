@@ -32,7 +32,13 @@ func (packet *PacketClientWin) Receive(client *Client) (err error) {
 	if len(game.Winners) == game.WinnersNumber {
 		lobby := client.Lobby
 
-		lobby.InterruptTimeout <- NewTimeoutResult(true, constants.TimeoutTypeGameStart)
+		for timeoutUuid, running := range game.TimeoutUuids {
+			if running {
+				lobby.InterruptTimeouts[timeoutUuid] <- true
+				game.TimeoutUuids[timeoutUuid] = false
+			}
+		}
+
 		game.Reward(lobby)
 
 		if winners, exists := lobby.GetWinners(); exists {

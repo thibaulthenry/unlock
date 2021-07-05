@@ -44,6 +44,21 @@ export default {
             slide: true
         }
     },
+    'GameStarWars': {
+        keyboard: {
+            down: false,
+            left: true,
+            right: true,
+            space: false,
+            up: true
+        },
+        mouse: {
+            leftClick: false,
+            middleClick: false,
+            rightClick: false,
+            slide: false
+        }
+    },
     'Lobby': {
         keyboard: {
             down: false,

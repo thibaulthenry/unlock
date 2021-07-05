@@ -8,6 +8,7 @@ export default class PacketServerGameWait {
 
   constructor(packet, internal = false) {
     this.label = PacketLabels.SERVER_GAME_WAIT
+    this.initialisation = packet.initialisation || false
     this.internal = internal
     this.points = packet.points || {}
     this.previousWinners = packet.previousWinners || {}
@@ -24,6 +25,12 @@ export default class PacketServerGameWait {
           }
         },
     )
+
+    if (this.initialisation) {
+      bus.$emit(EventTypes.TOGGLE_MUSIC_LOOP, true)
+    }
+
+    store.commit('SET_PREVIOUS_WINNERS', {winners: this.previousWinners})
   }
 
 }

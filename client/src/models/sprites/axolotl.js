@@ -9,6 +9,7 @@ export default class Axolotl extends GameObjects.Sprite {
 
     scene.physics.world.enable(this)
     scene.add.existing(this)
+
     if (noGravity) {
       this.body.setAllowGravity(false)
     }
@@ -157,7 +158,7 @@ export default class Axolotl extends GameObjects.Sprite {
     this.walking = false
     this.jumping = !this.body.onFloor()
 
-    if (this.cursors.left.isDown) {
+    if (this.cursors.left.isDown || this.cursors.KeyA.isDown  || this.cursors.KeyQ.isDown) {
       this.direction = SpriteDirections.LEFT
 
       if (!this.scene.freezeMovements) {
@@ -166,7 +167,7 @@ export default class Axolotl extends GameObjects.Sprite {
       }
     }
 
-    if (this.cursors.right.isDown) {
+    if (this.cursors.right.isDown || this.cursors.KeyD.isDown) {
       this.direction = SpriteDirections.RIGHT
 
       if (!this.scene.freezeMovements) {

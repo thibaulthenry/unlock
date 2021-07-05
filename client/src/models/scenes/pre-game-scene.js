@@ -1,4 +1,4 @@
-import {Scene} from 'phaser'
+import {Input, Scene} from 'phaser'
 import Axolotl from '../sprites/axolotl'
 import lodash from 'lodash'
 import PacketClientSceneMovement from '../packets/packet-client-scene-movement'
@@ -97,7 +97,10 @@ export default class PreGameScene extends Scene {
 
     switch (packet.label) {
       case PacketLabels.SERVER_SCENE_MOVEMENT:
-        new PacketServerSceneMovement(packet).receive(store, SceneKeys.PRE_GAME, this.axolotlsMap)
+        new PacketServerSceneMovement(packet).receive(
+            SceneKeys.PRE_GAME,
+            packet => SceneUtils.handleServerAxolotlMovement(packet, this.axolotlsMap)
+        )
         break
     }
   }
@@ -152,6 +155,9 @@ export default class PreGameScene extends Scene {
 
     this.throttledUpdatePlayersSprites = lodash.throttle(this.updatePlayersSprites, 500)
     this.cursors = this.input.keyboard.createCursorKeys()
+    this.cursors.KeyA = this.input.keyboard.addKey(Input.Keyboard.KeyCodes.A);
+    this.cursors.KeyQ = this.input.keyboard.addKey(Input.Keyboard.KeyCodes.Q);
+    this.cursors.KeyD = this.input.keyboard.addKey(Input.Keyboard.KeyCodes.D);
   }
 
   preloadAxolotls() {

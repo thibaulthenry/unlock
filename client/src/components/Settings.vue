@@ -5,8 +5,10 @@
         <v-text-field
             ref="clientNameField"
             v-model="clientName"
-            :rules="[value => !!value || $t('errors.required'), value => (value && value.length < 20) || $t('errors.overflow')]"
+            :rules="[value => !!value || $t('errors.required')]"
             :label="$t('settings.name')"
+            maxlength="20"
+            counter="20"
             clearable
             outlined
             rounded

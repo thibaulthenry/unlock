@@ -39,12 +39,12 @@
 </template>
 
 <script>
-import Footer from "./components/global/Footer"
-import GameFooter from "./components/global/GameFooter"
+import Footer from './components/global/Footer'
+import GameFooter from './components/global/GameFooter'
+import Ladder from './components/Ladder'
 import Navigation from './components/global/Navigation'
-import Snackbar from "./components/global/Snackbar"
-import Ladder from "./components/Ladder"
-import Settings from "./components/Settings"
+import Settings from './components/Settings'
+import Snackbar from './components/global/Snackbar'
 
 export default {
   components: {
@@ -80,14 +80,6 @@ html {
 
 html::-webkit-scrollbar {
   display: none;
-}
-
-.fade-enter-active, .fade-leave-active {
-  transition: opacity .5s;
-}
-
-.fade-enter, .fade-leave-to {
-  opacity: 0;
 }
 
 .v-navigation-drawer__content {
