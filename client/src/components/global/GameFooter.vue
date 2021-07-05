@@ -1,26 +1,31 @@
 <template>
-  <v-footer color="grey darken-2">
+  <v-footer
+      color="grey darken-2"
+      :height="minimized ? '62px' : '200px'"
+  >
     <v-row
         no-gutters
         class="pa-2"
     >
       <Mouse
           v-if="!$vuetify.breakpoint.mobile"
-          style="width: 220px"
-      />
+          style="width: 220px; opacity: 1; transition: opacity 1s"
+            :class="minimized ? 'inputs-hidden' : undefined"
+        />
 
-      <v-spacer/>
+        <v-spacer/>
 
-      <Display/>
+        <Display/>
 
-      <v-spacer/>
+        <v-spacer/>
 
-      <Keyboard
-          v-if="!$vuetify.breakpoint.mobile"
-          style="width: 220px"
-      />
-    </v-row>
-  </v-footer>
+        <Keyboard
+            v-if="!$vuetify.breakpoint.mobile"
+            style="width: 220px; opacity: 1; transition: opacity 1s"
+            :class="minimized ? 'inputs-hidden' : undefined"
+        />
+      </v-row>
+    </v-footer>
 </template>
 
 <script>
@@ -29,10 +34,23 @@ import Mouse from '../Mouse'
 import Display from '../Display'
 
 export default {
-  components: {Display, Keyboard, Mouse}
+  components: {Display, Keyboard, Mouse},
+
+  computed: {
+    minimized() {
+      return this.$store.state.footerMinimized
+    }
+  }
 }
 </script>
 
 <style scoped>
+.v-footer {
+  overflow-y: hidden;
+  transition: height 1s;
+}
 
+.inputs-hidden {
+  opacity: 0 !important;
+}
 </style>

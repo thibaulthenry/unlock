@@ -24,16 +24,16 @@ func (packet *PacketClientLobbyStart) Receive(client *Client) (err error) {
 	lobby.StartTime = time.Now()
 	lobby.State = constants.LobbyStateStarting
 
-	lobby.TimeoutTick(constants.TimeoutTypeLobbyStart, constants.TimeoutDurationLobbyStart, func() (err error) {
-		return NewPacketServerGameWait().Send(lobby)
+	lobby.TimeoutTickCountdown(constants.TimeoutDurationLobbyStart, func() (err error) {
+		return NewPacketServerGameWait(true).Send(lobby)
 	})
 
-	lobby.Timeout(constants.TimeoutTypeLobbyStartImminent, constants.TimeoutDurationLobbyStartImminent, func() (err error) {
+	lobby.Timeout(constants.TimeoutDurationLobbyStartImminent, func() (err error) {
 		lobby.State = constants.LobbyStateStartingImminent
 		return lobby.PushToFirestore()
 	})
 
-	lobby.Timeout(constants.TimeoutTypeLobbyCollapse, constants.TimeoutDurationLobbyCollapse, func() (err error) {
+	lobby.Timeout(constants.TimeoutDurationLobbyCollapse, func() (err error) {
 		return NewPacketServerLobbyCollapse().Send(lobby)
 	})
 

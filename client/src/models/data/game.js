@@ -5,6 +5,7 @@ import GameWinConditions from '../../constants/game-win-conditions'
 export default class Game {
 
   constructor(payload) {
+    this.data = payload.data || null
     this.duration = payload.duration || null
     this.sceneKey = payload.sceneKey || null
     this.startTime = payload.startTime || null

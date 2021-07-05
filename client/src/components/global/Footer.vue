@@ -1,9 +1,25 @@
 <template>
-  <v-footer color="grey darken-2">
+  <v-footer
+      color="grey darken-2"
+      height="80px"
+  >
     <v-row
         justify="center"
         no-gutters
     >
+      <v-btn
+          href="https://github.com/thibaulthenry/unlock"
+          target="_blank"
+          color="white"
+          text
+          rounded
+          dark
+      >
+        <v-icon>
+          mdi-github
+        </v-icon>
+      </v-btn>
+
       <v-btn
           href="https://discord.gg/73xCehtWsK"
           target="_blank"

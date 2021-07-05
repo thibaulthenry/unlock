@@ -1,8 +1,8 @@
+import About from '../views/About';
 import Home from '../views/Home.vue'
 import Lobby from '../views/lobbies/Lobby.vue'
 import Vue from 'vue'
 import VueRouter from 'vue-router'
-import About from "@/views/About";
 
 Vue.use(VueRouter)
 

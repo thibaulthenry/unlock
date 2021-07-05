@@ -98,6 +98,8 @@ export default class PreGameFallScene extends Scene {
     if (this.timeoutChangeScene) {
       clearTimeout(this.timeoutChangeScene)
     }
+
+    this.sound.stopByKey('door-open')
   }
 
   handlePacket(packet) {

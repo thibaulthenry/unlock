@@ -24,7 +24,7 @@ func (packet *PacketServerLobbyInterrupt) Send(lobby *Lobby) (err error) {
 		return errors.WithStack(err)
 	}
 
-	lobby.InterruptTimeouts()
+	lobby.InterruptAllTimeouts()
 	lobby.State = constants.LobbyStatePending
 
 	lobby.Broadcast <- payload

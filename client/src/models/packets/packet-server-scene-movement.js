@@ -19,20 +19,13 @@ export default class PacketServerSceneMovement {
     this.sceneKey = packet.sceneKey || null
   }
 
-  receive(store, sceneKey, playersMap) {
+  receive(sceneKey, callback) {
     if (this.sceneKey !== sceneKey) {
       return
     }
 
-    const uuid = store.state.client.uuid
-
-    for (let [clientUuid, axolotl] of playersMap.entries()) {
-      if (this.clientUuid !== uuid && this.clientUuid === clientUuid) {
-        axolotl.setPosition(this.x, this.y)
-        axolotl.updateNamePosition(this.x, this.y - 71)
-        axolotl.updateNameTrianglePosition(this.x + 10, this.y - 46)
-        axolotl.playAnimations(this.direction, this.jumping, this.walking)
-      }
+    if (typeof callback === 'function') {
+      callback(this)
     }
   }
 

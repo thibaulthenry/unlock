@@ -69,6 +69,10 @@ export default class GameFallingApplesScene extends Scene {
       loop: true,
       paused: false
     })
+
+    // Inputs
+
+    this.input.setDefaultCursor('');
   }
 
   handlePacket(packet) {

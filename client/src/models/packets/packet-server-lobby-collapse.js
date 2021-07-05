@@ -22,6 +22,8 @@ export default class PacketServerLobbyCollapse {
       scene.createCageSprites()
       scene.physics.world.setBounds(0, 0, scene.sceneWidth, scene.sceneHeight * 2 - 50)
       scene.cameras.main.setBounds(0, 0, scene.sceneWidth, scene.sceneHeight * 2)
+      scene.cameras.main.stopFollow()
+      scene.cameras.main.pan(scene.axolotl.body.x + 36, scene.sceneHeight * 2, 1200)
       scene.time.delayedCall(500, () => {
         scene.cameras.main.shake(0)
         scene.sound.stopByKey('earthquake')

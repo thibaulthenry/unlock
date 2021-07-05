@@ -28,6 +28,8 @@ export default new Vuex.Store({
 
     drawer: true,
 
+    footerMinimized: false,
+
     _game: null,
     game: null,
 
@@ -40,6 +42,9 @@ export default new Vuex.Store({
       capacity: 5,
       pointsGoal: 5
     }),
+
+    playMusicLoop: false,
+    previousWinners: {},
 
     sceneInputs: {
       keyboard: {
@@ -82,6 +87,10 @@ export default new Vuex.Store({
       state.drawer = drawer
     },
 
+    SET_FOOTER_MINIMIZED(state, {footerMinimized}) {
+      state.footerMinimized = footerMinimized
+    },
+
     SET_GAME(state, {game}) {
       state._game = game
       state.game = new Game(state._game)
@@ -112,6 +121,14 @@ export default new Vuex.Store({
 
       state._lobby.pointsGoal = lobbyPointsGoal
       state.lobby = new Lobby(state._lobby)
+    },
+
+    SET_PLAY_MUSIC_LOOP(state, {play}) {
+      state.playMusicLoop = play
+    },
+
+    SET_PREVIOUS_WINNERS(state, {winners}) {
+      state.previousWinners = winners
     },
 
     SET_SCENE_INPUTS(state, {inputs}) {

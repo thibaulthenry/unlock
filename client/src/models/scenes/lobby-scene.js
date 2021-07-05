@@ -1,4 +1,4 @@
-import {Scene} from 'phaser'
+import {Input, Scene} from 'phaser'
 import Axolotl from '../sprites/axolotl'
 import Cage from '../sprites/cage'
 import lodash from 'lodash'
@@ -72,6 +72,12 @@ export default class LobbyScene extends Scene {
     }
   }
 
+  destroy() {
+    this.sound.stopByKey('earthquake')
+    this.sound.stopByKey('landslide')
+    this.sound.stopByKey('cage-lock')
+  }
+
   handlePacket(packet) {
     // noinspection JSIgnoredPromiseFromCall
     store.dispatch('handlePacket', packet)
@@ -81,7 +87,10 @@ export default class LobbyScene extends Scene {
         new PacketServerLobbyCollapse().receive(this)
         break
       case PacketLabels.SERVER_SCENE_MOVEMENT:
-        new PacketServerSceneMovement(packet).receive(store, SceneKeys.LOBBY, this.axolotlsMap)
+        new PacketServerSceneMovement(packet).receive(
+            SceneKeys.LOBBY,
+            packet => SceneUtils.handleServerAxolotlMovement(packet, this.axolotlsMap)
+        )
         break
     }
   }
@@ -95,6 +104,8 @@ export default class LobbyScene extends Scene {
       } catch (ignored) {
       }
     }
+
+    this.events.on('destroy', this.destroy, this)
 
     // Textures
 
@@ -126,6 +137,9 @@ export default class LobbyScene extends Scene {
 
     this.throttledUpdatePlayersSprites = lodash.throttle(this.updatePlayersSprites, 500)
     this.cursors = this.input.keyboard.createCursorKeys()
+    this.cursors.KeyA = this.input.keyboard.addKey(Input.Keyboard.KeyCodes.A);
+    this.cursors.KeyQ = this.input.keyboard.addKey(Input.Keyboard.KeyCodes.Q);
+    this.cursors.KeyD = this.input.keyboard.addKey(Input.Keyboard.KeyCodes.D);
   }
 
   preloadAxolotls() {
@@ -169,26 +183,7 @@ export default class LobbyScene extends Scene {
   }
 
   updatePlayersSprites() {
-    const lobby = store.state.lobby
-
-    if (!lobby) {
-      return
-    }
-
-    const lobbyPlayersMap = lobby.getPlayersMap()
-
-    for (let uuid of this.axolotlsMap.keys()) {
-      if (!lobbyPlayersMap.has(uuid)) {
-        this.axolotlsMap.get(uuid).destroy()
-        this.axolotlsMap.delete(uuid)
-      }
-    }
-
-    lobby.getPlayers().forEach(player => {
-      if (!this.axolotlsMap.has(player.uuid)) {
-        this.axolotlsMap.set(player.uuid, new Axolotl(this, this.sceneWidth / 2, this.sceneHeight - 50, 'axolotl', player.name, player.spriteColor, true))
-      }
-    })
+    SceneUtils.updateSprites(this.axolotlsMap, (player) => new Axolotl(this, this.sceneWidth / 2, this.sceneHeight - 50, 'axolotl', player.name, player.spriteColor, true))
 
     if (!this.freezeMovements) {
       this.children.bringToTop(this.axolotl)
