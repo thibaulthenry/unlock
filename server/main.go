@@ -14,7 +14,8 @@ import (
 func serveWebSocket(lobbyRepository *models.LobbyRepository, upgrader websocket.Upgrader, w http.ResponseWriter, r *http.Request) {
 	upgrader.CheckOrigin = func(r *http.Request) bool {
 		origin := r.Header.Get("Origin")
-		return origin == "https://unlock-db.web.app" || origin == "https://unlock-db.firebaseapp.com" || origin == "https://unlock-db.web.app/" || origin == "https://unlock-db.firebaseapp.com/"
+		// return origin == "https://unlock-db.web.app" || origin == "https://unlock-db.firebaseapp.com" || origin == "https://unlock-db.web.app/" || origin == "https://unlock-db.firebaseapp.com/"
+		return origin == "http://localhost:3000" || origin == "http://localhost:5000" || origin == "http://192.168.1.15:3000" || origin == "http://192.168.1.17:5000" || origin == "http://192.168.43.157:3000"
 	}
 
 	connection, err := upgrader.Upgrade(w, r, nil)

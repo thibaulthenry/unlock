@@ -199,7 +199,8 @@ export default new Vuex.Store({
       store.commit('SET_LOBBY_CODE', {lobbyCode})
 
       return new Promise((resolve, reject) => {
-        let webSocket = new WebSocket('wss://unlock-server-dvibvdky5q-ew.a.run.app')
+        // let webSocket = new WebSocket('wss://unlock-server-dvibvdky5q-ew.a.run.app')
+        let webSocket = new WebSocket('ws://localhost:8080')
 
         webSocket.onopen = () => {
           store.commit('SET_WEB_SOCKET', {webSocket})

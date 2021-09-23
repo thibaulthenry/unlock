@@ -4,7 +4,7 @@ import SpriteDirections from '../../constants/sprite-directions'
 
 export default class Axolotl extends GameObjects.Sprite {
 
-  constructor(scene, x, y, key, name, color, noGravity, avoidBounds) {
+  constructor(scene, x, y, key, name, color, noGravity, avoidBounds, zoom = 1) {
     super(scene, x, y, `${key}-${color}`)
 
     scene.physics.world.enable(this)
@@ -18,6 +18,8 @@ export default class Axolotl extends GameObjects.Sprite {
       this.body.collideWorldBounds = true
     }
 
+    this.speedFactor = 1
+    this.zoom = zoom
     this.color = color
     this.coordinates = this.getCoordinates()
     this.cursors = scene.cursors
@@ -29,6 +31,10 @@ export default class Axolotl extends GameObjects.Sprite {
     this.axolotlName = this.scene.add.text(x + 50, y - 28, name, {fontSize: '16px', color: '#000000', fontStyle: 'bold'})
         .setOrigin(0.5, 0.5)
         .setVisible(false)
+
+    if (zoom !== 1) {
+      this.axolotlName.setScale(1 + 0.5 * zoom)
+    }
 
     this.axolotlNameTriangle = this.scene.add.triangle(x + 50, y - 8, -8, -8, 8, -8, 0, 0, SpriteColorCodes[color].hex)
         .setOrigin(0.5, 0.5)
@@ -149,6 +155,10 @@ export default class Axolotl extends GameObjects.Sprite {
     if (walking !== null && walking !== undefined) this.walking = walking
   }
 
+  setSpeedFactor(factor) {
+    this.speedFactor = factor
+  }
+
   update() {
     if (!this.body) {
       return
@@ -162,7 +172,7 @@ export default class Axolotl extends GameObjects.Sprite {
       this.direction = SpriteDirections.LEFT
 
       if (!this.scene.freezeMovements) {
-        this.body.setVelocityX(-200)
+        this.body.setVelocityX(-200 * this.speedFactor)
         this.walking = true
       }
     }
@@ -171,7 +181,7 @@ export default class Axolotl extends GameObjects.Sprite {
       this.direction = SpriteDirections.RIGHT
 
       if (!this.scene.freezeMovements) {
-        this.body.setVelocityX(200)
+        this.body.setVelocityX(200 * this.speedFactor)
         this.walking = true
       }
     }
@@ -186,8 +196,8 @@ export default class Axolotl extends GameObjects.Sprite {
     }
 
     this.playAnimations()
-    this.updateNamePosition(this.body.x + 50, this.body.y - 28)
-    this.updateNameTrianglePosition(this.body.x + 60, this.body.y - 3)
+    this.updateNamePosition(this.body.x + 50 * this.zoom, this.body.y - 28)
+    this.updateNameTrianglePosition(this.body.x + 60 * this.zoom, this.body.y - 3)
   }
 
   updateNamePosition(x, y) {

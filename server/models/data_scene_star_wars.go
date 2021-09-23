@@ -16,7 +16,7 @@ type Star struct {
 	Uuid        string       `json:"uuid" firestore:"-"`
 }
 
-func NewDataStarWarsScene() *DataSceneStarWars {
+func NewDataSceneStarWars() *DataSceneStarWars {
 	return &DataSceneStarWars{
 		Points: make(map[string]int),
 		Stars:  make(map[string]*Star),

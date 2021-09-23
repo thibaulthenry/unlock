@@ -8,6 +8,7 @@
                 class="carousel"
                 height="350px"
                 hide-delimiters
+                show-arrows-on-hover
                 cycle
             >
               <v-carousel-item
@@ -48,8 +49,8 @@
             <!-- </v-col>-->
           </v-row>
 
-          <v-row class="d-flex justify-center mt-5">
-            <v-col cols="12" md="8">
+          <v-row class="d-flex justify-center">
+            <v-col cols="12" md="8" class="pb-0">
               <v-text-field
                   v-model="lobbyCode"
                   :label="$t('buttons.lobby.code')"
@@ -79,6 +80,7 @@ export default {
       items: [
         {src: 'https://firebasestorage.googleapis.com/v0/b/unlock-db.appspot.com/o/games%2Fgame_falling_apples.png?alt=media'},
         {src: 'https://firebasestorage.googleapis.com/v0/b/unlock-db.appspot.com/o/games%2Fgame_space_vegetables.png?alt=media'},
+        {src: 'https://firebasestorage.googleapis.com/v0/b/unlock-db.appspot.com/o/games%2Fgame_star_wars.png?alt=media'},
       ],
       loadingCreate: false,
       loadingJoin: false,

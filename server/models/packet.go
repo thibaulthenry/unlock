@@ -30,8 +30,38 @@ func HandlePacket(client *Client, payload []byte) (err error) {
 
 		return packet.Receive(client)
 
+	case constants.PacketClientFocus:
+		var packet PacketClientFocus
+
+		err = json.Unmarshal(payload, &packet)
+		if err != nil {
+			return errors.WithStack(err)
+		}
+
+		return packet.Receive(client)
+
 	case constants.PacketClientLobbyStart:
 		var packet PacketClientLobbyStart
+
+		err = json.Unmarshal(payload, &packet)
+		if err != nil {
+			return errors.WithStack(err)
+		}
+
+		return packet.Receive(client)
+
+	case constants.PacketClientSceneFloatingIslandsCollide:
+		var packet PacketClientSceneFloatingIslandCollide
+
+		err = json.Unmarshal(payload, &packet)
+		if err != nil {
+			return errors.WithStack(err)
+		}
+
+		return packet.Receive(client)
+
+	case constants.PacketClientSceneFloatingIslandsFall:
+		var packet PacketClientSceneFloatingIslandFall
 
 		err = json.Unmarshal(payload, &packet)
 		if err != nil {

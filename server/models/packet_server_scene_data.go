@@ -28,7 +28,10 @@ func (packet *PacketServerSceneData) Send(lobby *Lobby) (err error) {
 		return errors.WithStack(err)
 	}
 
-	lobby.Broadcast <- payload
+	if lobby.State == constants.LobbyStateStarted {
+		// todo error send on closed channel
+		lobby.Broadcast <- payload
+	}
 
 	return lobby.PushToFirestore()
 }

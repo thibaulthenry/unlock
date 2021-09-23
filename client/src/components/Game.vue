@@ -42,10 +42,12 @@ import bus from '../services/event-bus'
 import EndScene from '../models/scenes/end-scene'
 import EventTypes from '../constants/event-types'
 import GameFallingApplesScene from '../models/scenes/game-falling-apples-scene'
+import GameFloatingIslandsScene from '../models/scenes/game-floating-islands-scene'
 import GameSpaceVegetablesScene from '../models/scenes/game-space-vegetables-scene'
 import GameStarWarsScene from '../models/scenes/game-star-wars-scene'
 import LobbyScene from '../models/scenes/lobby-scene'
 import LobbyStates from '../constants/lobby-states'
+import PacketClientFocus from '../models/packets/packet-client-focus'
 import Phaser from 'phaser'
 import PreGameScene from '../models/scenes/pre-game-scene'
 import PreGameFallScene from '../models/scenes/pre-game-fall-scene'
@@ -87,6 +89,10 @@ export default {
   },
 
   methods: {
+    changeFocusState(state) {
+      this.$store.dispatch('sendPacket', new PacketClientFocus(state))
+    },
+
     changeScene(sceneKey, data) {
       if (sceneKey) {
         this.game.scene.stop(this.sceneKey)
@@ -103,6 +109,8 @@ export default {
           return EndScene
         case SceneKeys.GAME_FALLING_APPLES:
           return GameFallingApplesScene
+        case SceneKeys.GAME_FLOATING_ISLANDS:
+          return GameFloatingIslandsScene
         case SceneKeys.GAME_SPACE_VEGETABLES:
           return GameSpaceVegetablesScene
         case SceneKeys.GAME_STAR_WARS:
@@ -193,6 +201,9 @@ export default {
       antialias: true
     })
 
+    this.game.events.on('visible', () => this.changeFocusState(true))
+    this.game.events.on('hidden', () => this.changeFocusState(false))
+
     this.game.sound.pauseOnBlur = false
     this.loopAudio.loop = true
 
@@ -205,6 +216,7 @@ export default {
   beforeDestroy() {
     this.resetMusicLoop()
     this.$window.removeEventListener('contextmenu', this.preventRightClick)
+    this.game.events.off('visible')
     bus.$off(EventTypes.GAME_CHANGE_SCENE)
     bus.$off(EventTypes.GAME_COUNTDOWN)
     bus.$off(EventTypes.LOBBY_INTERRUPT)

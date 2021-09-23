@@ -7,7 +7,6 @@ import i18n from '../../services/i18n'
 import SceneKeys from '../../constants/scene-keys'
 import SceneUtils from './scene-utils'
 import Sign from '../sprites/sign'
-import SpriteColors from '../../constants/sprite-colors'
 import SpriteDirections from '../../constants/sprite-directions'
 import store from '../../services/store'
 
@@ -213,7 +212,7 @@ export default class EndScene extends Scene {
 
     // Sprites
 
-    this.preloadAxolotls()
+    SceneUtils.preloadAxolotls(this)
     this.load.spritesheet('cage', '../assets/sprites/cages/cage.png', {frameWidth: 120, frameHeight: 180})
 
     // Particles
@@ -223,20 +222,6 @@ export default class EndScene extends Scene {
     // Audio
 
     this.load.audio('door-open', '../assets/sounds/pre-game-fall/door_open.mp3')
-  }
-
-  preloadAxolotls() {
-    let color
-
-    for (let i = 0; i < SpriteColors.length; i++) {
-      color = SpriteColors[i]
-
-      this.load.spritesheet(
-          `axolotl-${color}`,
-          `../assets/sprites/axolotls/axolotl-${color}.png`,
-          {frameWidth: 100, frameHeight: 86}
-      )
-    }
   }
 
   update() {
@@ -264,9 +249,9 @@ export default class EndScene extends Scene {
       this.axolotl.setMotion({walking: false})
 
       this.time.addEvent({
+        callback: () => this.particles.emitParticleAt(this.axolotl.body.x + this.axolotl.body.width / 2, this.axolotl.body.y - this.axolotl.body.height / 2),
+        callbackScope: this,
         delay: 250,
-        callback: (scene) => scene.particles.emitParticleAt(this.axolotl.body.x + this.axolotl.body.width / 2, this.axolotl.body.y - this.axolotl.body.height / 2),
-        args: [this],
         repeat: store.state.lobby.pointsGoal - 1
       })
 

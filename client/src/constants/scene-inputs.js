@@ -29,6 +29,36 @@ export default {
             slide: true
         }
     },
+    'GameFloatingIslands': {
+        keyboard: {
+            down: false,
+            left: true,
+            right: true,
+            space: true,
+            up: false
+        },
+        mouse: {
+            leftClick: false,
+            middleClick: false,
+            rightClick: false,
+            slide: false
+        }
+    },
+    'GameFloatingIslandsLost': {
+        keyboard: {
+            down: true,
+            left: false,
+            right: false,
+            space: false,
+            up: true
+        },
+        mouse: {
+            leftClick: false,
+            middleClick: false,
+            rightClick: false,
+            slide: false
+        }
+    },
     'GameSpaceVegetables': {
         keyboard: {
             down: false,

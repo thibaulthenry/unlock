@@ -1,5 +1,5 @@
 import {GameObjects, Math} from 'phaser'
-import SpriteColorCodes from '../../constants/sprite-color-codes';
+import SpriteColorCodes from '../../constants/sprite-color-codes'
 
 export default class Spaceship extends GameObjects.Sprite {
 

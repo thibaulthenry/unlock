@@ -28,6 +28,7 @@ const messages = {
       },
       names: {
         GameFallingApples: 'Falling Apples',
+        GameFloatingIslands: 'Floating Islands',
         GameSpaceVegetables: 'Space Vegetables',
         GameStarWars: 'Star Wars'
       },
@@ -40,6 +41,7 @@ const messages = {
         },
         game: {
           GameFallingApples: 'Collect 7 apples before other players',
+          GameFloatingIslands: 'Last standing player wins',
           GameSpaceVegetables: 'Shoot the central vegetable',
           GameStarWars: 'Collect 6 stars before other players',
         }
@@ -113,6 +115,7 @@ const messages = {
       },
       names: {
         GameFallingApples: 'Chute de pommes',
+        GameFloatingIslands: 'Îles flottantes',
         GameSpaceVegetables: 'Légumes de l\'espace',
         GameStarWars: 'Guerre des étoiles'
       },
@@ -125,6 +128,7 @@ const messages = {
         },
         game: {
           GameFallingApples: 'Récoltez 7 pommes avant les autres joueurs',
+          GameFloatingIslands: 'Le dernier joueur debout gagne',
           GameSpaceVegetables: 'Tirez pour éliminer le légume central',
           GameStarWars: 'Récoltez 6 étoiles avant les autres joueurs'
         }

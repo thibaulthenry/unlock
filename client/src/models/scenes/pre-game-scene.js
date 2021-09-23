@@ -1,19 +1,17 @@
 import {Input, Scene} from 'phaser'
 import Axolotl from '../sprites/axolotl'
-import lodash from 'lodash'
 import PacketClientSceneMovement from '../packets/packet-client-scene-movement'
 import PacketLabels from '../../constants/packet-labels'
 import PacketServerSceneMovement from '../packets/packet-server-scene-movement'
 import SceneKeys from '../../constants/scene-keys'
 import SceneUtils from './scene-utils'
 import Sign from '../sprites/sign'
-import SpriteColors from '../../constants/sprite-colors'
 import SpriteDirections from '../../constants/sprite-directions'
 import store from '../../services/store'
 
 export default class PreGameScene extends Scene {
 
-  axolotlsMap = new Map()
+  axolotlMap = new Map()
 
   constructor() {
     super({
@@ -41,17 +39,7 @@ export default class PreGameScene extends Scene {
 
     // Background
 
-    SceneUtils.createBackground(this, 'dungeon-sky', 'dungeon-sky', 1, 0)
-    SceneUtils.createBackground(this, 'dungeon-mountains', 'dungeon-mountains', 1, 0.25)
-    SceneUtils.createBackground(this, 'dungeon-plateau', 'dungeon-plateau', 1, 0.6)
-    SceneUtils.createBackground(this, 'dungeon-wall', 'dungeon-wall', 2, 1)
-    SceneUtils.createBackground(this, 'dungeon-ceil', 'dungeon-ceil', 2, 1)
-    SceneUtils.createBackground(this, 'dungeon-ground-bottom', 'dungeon-ground-bottom', 2, 1)
-    SceneUtils.createBackground(this, 'dungeon-ground-middle-right-hole', 'dungeon-ground-middle-right-hole', 1, 1)
-    SceneUtils.createBackground(this, 'dungeon-ground-middle', 'dungeon-ground-middle', 2, 1)
-    SceneUtils.createBackground(this, 'dungeon-ground-top', 'dungeon-ground-top', 2, 1)
-    SceneUtils.createBackground(this, 'dungeon-ground-hole', 'dungeon-ground-hole', 1, 1)
-    SceneUtils.createBackground(this, 'dungeon-ground-trap', 'dungeon-ground-trap', 1, 1)
+    SceneUtils.createBackgroundPreGame(this)
 
     // Sprites
 
@@ -67,7 +55,7 @@ export default class PreGameScene extends Scene {
     )
 
     this.axolotl.setMotion({direction: wonLastGame ? SpriteDirections.LEFT : SpriteDirections.RIGHT})
-    this.axolotlsMap.set(store.state.client.uuid, this.axolotl)
+    this.axolotlMap.set(store.state.client.uuid, this.axolotl)
     this.sign = new Sign(this, 0, 75, 'dungeon-sign').setOrigin(0, 0)
 
     // Physics
@@ -77,15 +65,23 @@ export default class PreGameScene extends Scene {
     // Camera
 
     this.cameras.main.setBounds(0, 0, this.sceneWidth, this.sceneHeight)
-    this.cameras.main.startFollow(this.axolotl, true, 1, 0.01)
     this.cameras.main.fadeIn(500, 0, 0, 0)
+    this.cameras.main.startFollow(this.axolotl, true, 1, 0.01)
 
     // Time
 
     this.time.addEvent({
+      callback: this.updateSignText,
+      callbackScope: this,
       delay: 300,
-      callback: (scene) => this.updateSignText(scene),
-      args: [this],
+      loop: true,
+      paused: false
+    })
+
+    this.time.addEvent({
+      args: this,
+      callback: (scene) => this.updatePlayersSprites(scene),
+      delay: 500,
       loop: true,
       paused: false
     })
@@ -99,25 +95,16 @@ export default class PreGameScene extends Scene {
       case PacketLabels.SERVER_SCENE_MOVEMENT:
         new PacketServerSceneMovement(packet).receive(
             SceneKeys.PRE_GAME,
-            packet => SceneUtils.handleServerAxolotlMovement(packet, this.axolotlsMap)
+            packet => SceneUtils.handleServerAxolotlMovement(packet, this.axolotlMap)
         )
         break
     }
   }
 
+  // noinspection JSUnusedGlobalSymbols
   init(data) {
     this.points = data ? data.points : {}
     this.previousWinners = data ? data.previousWinners : {}
-  }
-
-  onSameFloor(playerUuid) {
-    const clientUuid = store.state.client?.uuid
-
-    if (!this.points || !playerUuid || !clientUuid) {
-      return true
-    }
-
-    return this.points[playerUuid] === this.points[clientUuid]
   }
 
   preload() {
@@ -132,51 +119,21 @@ export default class PreGameScene extends Scene {
 
     // Textures
 
-    this.load.image('dungeon-ceil', '../assets/scenes/pre-game/ceil.png')
-    this.load.image('dungeon-ground-bottom', '../assets/scenes/pre-game/ground_bottom.png')
-    this.load.image('dungeon-ground-hole', '../assets/scenes/pre-game/ground_hole.png')
-    this.load.image('dungeon-ground-middle', '../assets/scenes/pre-game/ground_middle.png')
-    this.load.image('dungeon-ground-middle-left-hole', '../assets/scenes/pre-game/ground_middle_left_hole.png')
-    this.load.image('dungeon-ground-middle-right-hole', '../assets/scenes/pre-game/ground_middle_right_hole.png')
-    this.load.image('dungeon-ground-top', '../assets/scenes/pre-game/ground_top.png')
-    this.load.image('dungeon-ground-trap', '../assets/scenes/pre-game/ground_trap.png')
-    this.load.image('dungeon-ground-trap-open', '../assets/scenes/pre-game/ground_trap_open.png')
-    this.load.image('dungeon-mountains', '../assets/scenes/pre-game/mountains.png')
-    this.load.image('dungeon-plateau', '../assets/scenes/pre-game/plateau.png')
-    this.load.image('dungeon-sky', '../assets/scenes/pre-game/sky.png')
-    this.load.image('dungeon-sign', '../assets/sprites/signs/sign.png')
-    this.load.image('dungeon-wall', '../assets/scenes/pre-game/wall.png')
+    SceneUtils.loadBackgroundPreGame(this)
 
     // Sprites
 
-    this.preloadAxolotls()
+    SceneUtils.preloadAxolotls(this)
 
     // Inputs
 
-    this.throttledUpdatePlayersSprites = lodash.throttle(this.updatePlayersSprites, 500)
     this.cursors = this.input.keyboard.createCursorKeys()
-    this.cursors.KeyA = this.input.keyboard.addKey(Input.Keyboard.KeyCodes.A);
-    this.cursors.KeyQ = this.input.keyboard.addKey(Input.Keyboard.KeyCodes.Q);
-    this.cursors.KeyD = this.input.keyboard.addKey(Input.Keyboard.KeyCodes.D);
-  }
-
-  preloadAxolotls() {
-    let color
-
-    for (let i = 0; i < SpriteColors.length; i++) {
-      color = SpriteColors[i]
-
-      this.load.spritesheet(
-          `axolotl-${color}`,
-          `../assets/sprites/axolotls/axolotl-${color}.png`,
-          {frameWidth: 100, frameHeight: 86}
-      )
-    }
+    this.cursors.KeyA = this.input.keyboard.addKey(Input.Keyboard.KeyCodes.A)
+    this.cursors.KeyD = this.input.keyboard.addKey(Input.Keyboard.KeyCodes.D)
+    this.cursors.KeyQ = this.input.keyboard.addKey(Input.Keyboard.KeyCodes.Q)
   }
 
   update(time, delta) {
-    // noinspection JSValidateTypes
-    this.throttledUpdatePlayersSprites()
     this.axolotl.update(time, delta)
 
     this.axolotlCoordinates = this.axolotl.getChangedCoordinates()
@@ -188,41 +145,40 @@ export default class PreGameScene extends Scene {
   }
 
   updatePlayersSprites() {
-    const lobby = store.state.lobby
+    SceneUtils.updatePlayersSprites(
+        this.axolotlMap,
+        player => {
 
-    if (!lobby) {
-      return
-    }
+          const wonLastGame = this.wonLastGame(player.uuid)
 
-    const clientPoints = this.points[store.state.client.uuid]
-    const lobbyPlayersMap = lobby.getPlayersMap(this.points, clientPoints)
+          const axolotl = new Axolotl(
+              this,
+              wonLastGame ? 250 : this.sceneWidth / 2,
+              wonLastGame ? -100 : this.sceneHeight - 50,
+              'axolotl',
+              player.name,
+              player.spriteColor,
+              true
+          )
 
-    for (let uuid of this.axolotlsMap.keys()) {
-      if (!lobbyPlayersMap.has(uuid)) {
-        this.axolotlsMap.get(uuid).destroy()
-        this.axolotlsMap.delete(uuid)
-      }
-    }
+          axolotl.setMotion({direction: wonLastGame ? SpriteDirections.LEFT : SpriteDirections.RIGHT})
 
-    lobby.getPlayers().forEach(player => {
-      if (!this.axolotlsMap.has(player.uuid) && this.onSameFloor(player.uuid)) {
-        const wonLastGame = this.wonLastGame(player.uuid)
+          return axolotl
+        },
+        playerUuid => {
+          const clientUuid = store.state.client?.uuid
 
-        const axolotl = new Axolotl(
-            this,
-            wonLastGame ? 250 : this.sceneWidth / 2,
-            wonLastGame ? -100 : this.sceneHeight - 50,
-            'axolotl',
-            player.name,
-            player.spriteColor,
-            true
-        )
+          if (!this.points || !playerUuid || !clientUuid) {
+            return true
+          }
 
-        axolotl.setMotion({direction: wonLastGame ? SpriteDirections.LEFT : SpriteDirections.RIGHT})
-
-        this.axolotlsMap.set(player.uuid, axolotl)
-      }
-    })
+          return this.points[playerUuid] === this.points[clientUuid]
+        },
+        player => {
+          const pointsRequired = this.points[store.state.client.uuid]
+          return !this.points || pointsRequired === null || pointsRequired === undefined || this.points[player.uuid] === pointsRequired
+        }
+  )
 
     if (!this.freezeMovements) {
       this.children.bringToTop(this.axolotl)
@@ -231,11 +187,11 @@ export default class PreGameScene extends Scene {
     }
   }
 
-  updateSignText(scene) {
+  updateSignText() {
     const floor = store.state.client.getFloor()
 
-    if (scene.sign && floor) {
-      scene.sign.updateText(floor)
+    if (this.sign && floor) {
+      this.sign.updateText(floor)
     }
   }
 

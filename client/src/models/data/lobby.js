@@ -36,18 +36,13 @@ export default class Lobby {
         : []
   }
 
-  getPlayersMap(points, clientPoints) {
+  getPlayersMap(filterPredicate) {
     const map = new Map()
 
-    this.getPlayers().forEach(player => {
-      if (points && (clientPoints !== null && clientPoints !== undefined)) {
-        if (points[player.uuid] === clientPoints) {
-          map.set(player.uuid, player)
-        }
-      } else {
-        map.set(player.uuid, player)
-      }
-    })
+    this.getPlayers()
+        .filter(player => !filterPredicate || filterPredicate(player))
+        .forEach(player => map.set(player.uuid, player))
+
     return map
   }
 

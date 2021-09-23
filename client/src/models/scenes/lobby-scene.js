@@ -1,19 +1,17 @@
 import {Input, Scene} from 'phaser'
 import Axolotl from '../sprites/axolotl'
 import Cage from '../sprites/cage'
-import lodash from 'lodash'
 import PacketClientSceneMovement from '../packets/packet-client-scene-movement'
 import PacketLabels from '../../constants/packet-labels'
 import PacketServerLobbyCollapse from '../packets/packet-server-lobby-collapse'
 import PacketServerSceneMovement from '../packets/packet-server-scene-movement'
 import SceneKeys from '../../constants/scene-keys'
 import SceneUtils from './scene-utils'
-import SpriteColors from '../../constants/sprite-colors'
 import store from '../../services/store'
 
 export default class LobbyScene extends Scene {
 
-  axolotlsMap = new Map()
+  axolotlMap = new Map()
 
   constructor() {
     super({
@@ -50,7 +48,7 @@ export default class LobbyScene extends Scene {
     // Sprites
 
     this.axolotl = new Axolotl(this, this.sceneWidth / 2, this.sceneHeight - 50, 'axolotl', store.state.client.name, store.state.client.spriteColor)
-    this.axolotlsMap.set(store.state.client.uuid, this.axolotl)
+    this.axolotlMap.set(store.state.client.uuid, this.axolotl)
 
     // Physics
 
@@ -62,11 +60,21 @@ export default class LobbyScene extends Scene {
     this.cameras.main.setBounds(0, 0, this.sceneWidth, this.sceneHeight)
     this.cameras.main.startFollow(this.axolotl, true, 1, 0.01)
     this.cameras.main.fadeIn(500, 0, 0, 0)
+
+    // Time
+
+    this.time.addEvent({
+      callback: this.updatePlayersSprites,
+      callbackScope: this,
+      delay: 500,
+      loop: true,
+      paused: false
+    })
   }
 
   createCageSprites() {
     const y = this.sceneHeight * 2 - 90 - 48
-    for (let player of this.axolotlsMap.values()) {
+    for (let player of this.axolotlMap.values()) {
       player.body.setAllowGravity(true)
       new Cage(this, player.x, y, 'cage')
     }
@@ -89,7 +97,7 @@ export default class LobbyScene extends Scene {
       case PacketLabels.SERVER_SCENE_MOVEMENT:
         new PacketServerSceneMovement(packet).receive(
             SceneKeys.LOBBY,
-            packet => SceneUtils.handleServerAxolotlMovement(packet, this.axolotlsMap)
+            packet => SceneUtils.handleServerAxolotlMovement(packet, this.axolotlMap)
         )
         break
     }
@@ -124,7 +132,7 @@ export default class LobbyScene extends Scene {
 
     // Sprites
 
-    this.preloadAxolotls()
+    SceneUtils.preloadAxolotls(this)
     this.load.spritesheet('cage', '../assets/sprites/cages/cage.png', {frameWidth: 120, frameHeight: 180})
 
     // Audio
@@ -135,30 +143,13 @@ export default class LobbyScene extends Scene {
 
     // Inputs
 
-    this.throttledUpdatePlayersSprites = lodash.throttle(this.updatePlayersSprites, 500)
     this.cursors = this.input.keyboard.createCursorKeys()
     this.cursors.KeyA = this.input.keyboard.addKey(Input.Keyboard.KeyCodes.A);
     this.cursors.KeyQ = this.input.keyboard.addKey(Input.Keyboard.KeyCodes.Q);
     this.cursors.KeyD = this.input.keyboard.addKey(Input.Keyboard.KeyCodes.D);
   }
 
-  preloadAxolotls() {
-    let color
-
-    for (let i = 0; i < SpriteColors.length; i++) {
-      color = SpriteColors[i]
-
-      this.load.spritesheet(
-          `axolotl-${color}`,
-          `../assets/sprites/axolotls/axolotl-${color}.png`,
-          {frameWidth: 100, frameHeight: 86}
-      )
-    }
-  }
-
   update(time, delta) {
-    // noinspection JSValidateTypes
-    this.throttledUpdatePlayersSprites()
     this.axolotl.update(time, delta)
 
     this.axolotlCoordinates = this.axolotl.getChangedCoordinates();
@@ -171,7 +162,7 @@ export default class LobbyScene extends Scene {
     if (this.freezeMovements) {
       let axolotlCoordinates
 
-      for (let axolotl of this.axolotlsMap.values()) {
+      for (let axolotl of this.axolotlMap.values()) {
         axolotlCoordinates = axolotl.getChangedCoordinates();
 
         if (axolotlCoordinates) {
@@ -183,7 +174,18 @@ export default class LobbyScene extends Scene {
   }
 
   updatePlayersSprites() {
-    SceneUtils.updateSprites(this.axolotlsMap, (player) => new Axolotl(this, this.sceneWidth / 2, this.sceneHeight - 50, 'axolotl', player.name, player.spriteColor, true))
+    SceneUtils.updatePlayersSprites(
+        this.axolotlMap,
+        player => new Axolotl(
+            this,
+            this.sceneWidth / 2,
+            this.sceneHeight - 50,
+            'axolotl',
+            player.name,
+            player.spriteColor,
+            true
+        )
+    )
 
     if (!this.freezeMovements) {
       this.children.bringToTop(this.axolotl)

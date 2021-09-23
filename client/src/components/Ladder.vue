@@ -126,7 +126,7 @@
 import GameStates from '../constants/game-states'
 import LobbyStates from '../constants/lobby-states'
 import SpriteColorCodes from '../constants/sprite-color-codes'
-import store from '../services/store';
+import store from '../services/store'
 
 export default {
   data: () => {

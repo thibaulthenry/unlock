@@ -4,7 +4,6 @@ import PacketServerGameWait from '../packets/packet-server-game-wait'
 import SceneKeys from '../../constants/scene-keys'
 import SceneUtils from './scene-utils'
 import Sign from '../sprites/sign'
-import SpriteColors from '../../constants/sprite-colors'
 import SpriteDirections from '../../constants/sprite-directions'
 import store from '../../services/store'
 
@@ -37,17 +36,7 @@ export default class PreGameFallScene extends Scene {
 
     // Background
 
-    SceneUtils.createBackground(this, 'dungeon-sky', 'dungeon-sky', 1, 0)
-    SceneUtils.createBackground(this, 'dungeon-mountains', 'dungeon-mountains', 1, 0.25)
-    SceneUtils.createBackground(this, 'dungeon-plateau', 'dungeon-plateau', 1, 0.6)
-    SceneUtils.createBackground(this, 'dungeon-wall', 'dungeon-wall', 2, 1)
-    SceneUtils.createBackground(this, 'dungeon-ceil', 'dungeon-ceil', 2, 1)
-    SceneUtils.createBackground(this, 'dungeon-ground-bottom', 'dungeon-ground-bottom', 2, 1)
-    SceneUtils.createBackground(this, 'dungeon-ground-middle-right-hole', 'dungeon-ground-middle-right-hole', 1, 1)
-    SceneUtils.createBackground(this, 'dungeon-ground-middle', 'dungeon-ground-middle', 2, 1)
-    SceneUtils.createBackground(this, 'dungeon-ground-top', 'dungeon-ground-top', 2, 1)
-    SceneUtils.createBackground(this, 'dungeon-ground-hole', 'dungeon-ground-hole', 1, 1)
-    SceneUtils.createBackground(this, 'dungeon-ground-trap', 'dungeon-ground-trap', 1, 1)
+    SceneUtils.createBackgroundPreGame(this)
 
     // Sprites
 
@@ -86,9 +75,9 @@ export default class PreGameFallScene extends Scene {
     // Time
 
     this.time.addEvent({
+      callback: this.updateSignText,
+      callbackScope: this,
       delay: 300,
-      callback: (scene) => this.updateSignText(scene),
-      args: [this],
       loop: true,
       paused: false
     })
@@ -126,24 +115,11 @@ export default class PreGameFallScene extends Scene {
 
     // Textures
 
-    this.load.image('dungeon-ceil', '../assets/scenes/pre-game/ceil.png')
-    this.load.image('dungeon-ground-bottom', '../assets/scenes/pre-game/ground_bottom.png')
-    this.load.image('dungeon-ground-hole', '../assets/scenes/pre-game/ground_hole.png')
-    this.load.image('dungeon-ground-middle', '../assets/scenes/pre-game/ground_middle.png')
-    this.load.image('dungeon-ground-middle-left-hole', '../assets/scenes/pre-game/ground_middle_left_hole.png')
-    this.load.image('dungeon-ground-middle-right-hole', '../assets/scenes/pre-game/ground_middle_right_hole.png')
-    this.load.image('dungeon-ground-top', '../assets/scenes/pre-game/ground_top.png')
-    this.load.image('dungeon-ground-trap', '../assets/scenes/pre-game/ground_trap.png')
-    this.load.image('dungeon-ground-trap-open', '../assets/scenes/pre-game/ground_trap_open.png')
-    this.load.image('dungeon-mountains', '../assets/scenes/pre-game/mountains.png')
-    this.load.image('dungeon-plateau', '../assets/scenes/pre-game/plateau.png')
-    this.load.image('dungeon-sky', '../assets/scenes/pre-game/sky.png')
-    this.load.image('dungeon-sign', '../assets/sprites/signs/sign.png')
-    this.load.image('dungeon-wall', '../assets/scenes/pre-game/wall.png')
+    SceneUtils.loadBackgroundPreGame(this)
 
     // Sprites
 
-    this.preloadAxolotls()
+    SceneUtils.preloadAxolotls(this)
 
     // Particles
 
@@ -156,20 +132,6 @@ export default class PreGameFallScene extends Scene {
     // Inputs
 
     this.cursors = this.input.keyboard.createCursorKeys()
-  }
-
-  preloadAxolotls() {
-    let color
-
-    for (let i = 0; i < SpriteColors.length; i++) {
-      color = SpriteColors[i]
-
-      this.load.spritesheet(
-          `axolotl-${color}`,
-          `../assets/sprites/axolotls/axolotl-${color}.png`,
-          {frameWidth: 100, frameHeight: 86}
-      )
-    }
   }
 
   update() {
@@ -212,11 +174,11 @@ export default class PreGameFallScene extends Scene {
     }
   }
 
-  updateSignText(scene) {
+  updateSignText() {
     const floor = store.state.client.getFloor() + 1
 
-    if (scene.sign && floor) {
-      scene.sign.updateText(floor)
+    if (this.sign && floor) {
+      this.sign.updateText(floor)
     }
   }
 

@@ -63,9 +63,9 @@ export default class GameFallingApplesScene extends Scene {
     // Time
 
     this.time.addEvent({
+      callback: () => new Apple(this, Math.Between(50, this.sceneWidth), 75, 'apple'),
+      callbackScope: this,
       delay: 1200,
-      callback: (scene) => new Apple(scene, Math.Between(50, scene.sceneWidth), 75, 'apple'),
-      args: [this],
       loop: true,
       paused: false
     })

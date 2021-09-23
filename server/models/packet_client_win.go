@@ -9,6 +9,10 @@ type PacketClientWin struct {
 }
 
 func (packet *PacketClientWin) Receive(client *Client) (err error) {
+	if client == nil || client.Lobby.State != constants.LobbyStateStarted {
+		return
+	}
+
 	game, exists := client.Lobby.CurrentGame()
 
 	if !exists {
@@ -32,13 +36,7 @@ func (packet *PacketClientWin) Receive(client *Client) (err error) {
 	if len(game.Winners) == game.WinnersNumber {
 		lobby := client.Lobby
 
-		for timeoutUuid, running := range game.TimeoutUuids {
-			if running {
-				lobby.InterruptTimeouts[timeoutUuid] <- true
-				game.TimeoutUuids[timeoutUuid] = false
-			}
-		}
-
+		game.InterruptAllTimeouts(lobby)
 		game.Reward(lobby)
 
 		if winners, exists := lobby.GetWinners(); exists {

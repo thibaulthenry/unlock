@@ -58,40 +58,16 @@
         :class="$vuetify.breakpoint.xsOnly ? 'mt-8': undefined"
         style="font-size: 18px"
     >
-      <span v-if="lobby && lobby.state === lobbyStates.PENDING">
-        {{ $t('lobby.states.pending') }}
-      </span>
-
       <span
-          v-if="lobby && lobby.state === lobbyStates.STARTING"
-          class="green--text"
+          v-if="lobby"
+          :class="{
+            'green--text': lobby.state === lobbyStates.STARTING,
+            'amber--text darken-3': lobby.state === lobbyStates.STARTING_IMMINENT,
+            'green--text': lobby.state === lobbyStates.STARTED && game && game.state !== gameStates.STARTED,
+            'red--text darken-3': lobby.state === lobbyStates.STARTED && game && game.state === gameStates.STARTED,
+          }"
       >
-        {{ $t('lobby.states.starting') }}
-      </span>
-
-      <span
-          v-if="lobby && lobby.state === lobbyStates.STARTING_IMMINENT"
-          class="amber--text darken-3"
-      >
-        {{ $t('lobby.states.startingImminent') }}
-      </span>
-
-      <span
-          v-if="lobby && lobby.state === lobbyStates.STARTED && game && game.state !== gameStates.STARTED"
-          class="green--text"
-      >
-        {{ $t('lobby.states.game.starting') }}
-      </span>
-
-      <span
-          v-if="lobby && lobby.state === lobbyStates.STARTED && game && game.state === gameStates.STARTED"
-          class="red--text darken-3"
-      >
-        {{ $t('lobby.states.game.started') }}
-      </span>
-
-      <span v-if="lobby && lobby.state === lobbyStates.ENDED">
-        {{ $t('lobby.states.ended') }}
+        {{ getTitleText() }}
       </span>
     </v-card-title>
 
@@ -111,7 +87,11 @@
         {{ $t('buttons.lobby.start') }}
       </v-btn>
 
-      <span v-if="lobby && lobby.state === lobbyStates.STARTED && game && game.sceneKey">
+      <span
+          v-if="lobby && lobby.state === lobbyStates.STARTED && game && game.sceneKey"
+          :style="{'opacity': minimized ? 0 : 1}"
+          style="transition: opacity 1s"
+      >
         {{ $t('display.names.' + game.sceneKey) }}
       </span>
 
@@ -203,6 +183,36 @@ export default {
   },
 
   methods: {
+    getTitleText() {
+      const lobby = this.lobby
+
+      if (!lobby) {
+        return
+      }
+
+      if (lobby.state === LobbyStates.PENDING) {
+        return this.$t('lobby.states.pending')
+      } else if (lobby.state === LobbyStates.STARTING) {
+        return this.$t('lobby.states.starting')
+      } else if (lobby.state === LobbyStates.STARTING_IMMINENT) {
+        return this.$t('lobby.states.startingImminent')
+      } else if (lobby.state === LobbyStates.ENDED) {
+        return this.$t('lobby.states.ended')
+      }
+
+      const game = this.game
+
+      if (game && this.minimized) {
+        return this.$t('display.names.' + game.sceneKey)
+      }
+
+      if (lobby.state === LobbyStates.STARTED && game && game.state !== GameStates.STARTED) {
+        return this.$t('lobby.states.game.starting')
+      } else if (lobby.state === LobbyStates.STARTED && game && game.state === GameStates.STARTED) {
+        return this.$t('lobby.states.game.started')
+      }
+    },
+
     quit() {
       if (this.$route.path !== '/') {
         this.$router.push('/')

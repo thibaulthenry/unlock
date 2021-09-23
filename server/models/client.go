@@ -11,6 +11,7 @@ import (
 type Client struct {
 	Channel         chan []byte           `json:"-"  firestore:"-"`
 	Connection      *websocket.Conn       `json:"-" firestore:"-"`
+	Focus           bool                  `json:"focus" firestore:"focus"`
 	Lobby           *Lobby                `json:"-" firestore:"-"`
 	LobbyRepository *LobbyRepository      `json:"-" firestore:"-"`
 	Name            string                `json:"name" firestore:"name"`
@@ -24,6 +25,7 @@ func NewClient(connection *websocket.Conn, lobbyRepository *LobbyRepository) *Cl
 	return &Client{
 		Channel:         make(chan []byte, 256),
 		Connection:      connection,
+		Focus: true,
 		LobbyRepository: lobbyRepository,
 		Spectating:      false,
 		Uuid:            uuid.NewString(),

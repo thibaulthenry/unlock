@@ -1,13 +1,13 @@
 import {Input, Scene} from 'phaser'
-import PacketClientSceneMovement from '../../models/packets/packet-client-scene-movement';
-import PacketClientSceneStarWarsCollect from "@/models/packets/packet-client-scene-star-wars-collect";
+import PacketClientSceneMovement from '../../models/packets/packet-client-scene-movement'
+import PacketClientSceneStarWarsCollect from '../../models/packets/packet-client-scene-star-wars-collect'
 import PacketLabels from '../../constants/packet-labels'
-import PacketServerSceneData from '../../models/packets/packet-server-scene-data';
+import PacketServerSceneData from '../../models/packets/packet-server-scene-data'
 import PacketServerSceneMovement from '../../models/packets/packet-server-scene-movement'
 import SceneKeys from '../../constants/scene-keys'
 import SceneUtils from '../../models/scenes/scene-utils'
 import Spaceship from '../../models/sprites/spaceship'
-import Star from '../../models/sprites/star';
+import Star from '../../models/sprites/star'
 import store from '../../services/store'
 
 export default class GameStarWarsScene extends Scene {
@@ -39,7 +39,7 @@ export default class GameStarWarsScene extends Scene {
     this.createBackground('star-wars-2', 2, 0.65)
     this.createBackground('star-wars-3', 1, 0.5)
     this.createBackground('star-wars-4', 1, 0.35)
-    this.createBackground('star-wars-5', 1, 0.20)
+    this.createBackground('star-wars-5', 2, 0.20)
     this.createBackground('star-wars-6', 1, 0.1)
     this.createBackground('star-wars-7', 2, 1)
 
@@ -60,6 +60,7 @@ export default class GameStarWarsScene extends Scene {
     })
 
     // Camera
+
     this.cameras.main.setBounds(0, 0, this.sceneWidth, this.sceneHeight)
     this.cameras.main.startFollow(this.spaceship, true)
     this.cameras.main.fadeIn(500, 0, 0, 0)
@@ -67,17 +68,17 @@ export default class GameStarWarsScene extends Scene {
     // Time
 
     this.time.addEvent({
+      callback: this.updateSpaceshipSprites,
+      callbackScope: this,
       delay: 500,
-      callback: (scene) => this.updateSpaceshipSprites(scene),
-      args: [this],
       loop: true,
       paused: false
     })
 
     this.time.addEvent({
+      callback: this.updateSpaceshipStarCount,
+      callbackScope: this,
       delay: 50,
-      callback: (scene)  =>this.updateSpaceshipStarCount(scene),
-      args: [this],
       loop: true,
       paused: false
     })
@@ -178,36 +179,49 @@ export default class GameStarWarsScene extends Scene {
     }
   }
 
-  updateSpaceshipSprites(scene) {
-    SceneUtils.updateSprites(
-        scene.spaceshipMap,
-        (player) => new Spaceship(scene, scene.sceneWidth / 2, scene.sceneHeight / 2, 'spaceship', player.name, player.spriteColor, 0)
+  updateSpaceshipSprites() {
+    SceneUtils.updatePlayersSprites(
+        this.spaceshipMap,
+        player => new Spaceship(
+            this,
+            this.sceneWidth / 2,
+            this.sceneHeight / 2,
+            'spaceship',
+            player.name,
+            player.spriteColor,
+            0
+        )
     )
-    scene.children.bringToTop(scene.spaceship)
-    scene.children.bringToTop(scene.spaceship.spaceshipNameTriangle)
-    scene.children.bringToTop(scene.spaceship.spaceshipName)
+
+    this.children.bringToTop(this.spaceship)
+    this.children.bringToTop(this.spaceship.spaceshipNameTriangle)
+    this.children.bringToTop(this.spaceship.spaceshipName)
   }
 
-  updateSpaceshipStarCount(scene) {
+  updateSpaceshipStarCount() {
     if (!(store.state.game && store.state.game.data && store.state.game.data.points)) {
       return
     }
 
     Object.entries(store.state.game.data.points).forEach(([key, value]) => {
-      if (scene.spaceshipMap.has(key)) {
-        scene.spaceshipMap.get(key).updateStarCount(value)
+      if (this.spaceshipMap.has(key)) {
+        this.spaceshipMap.get(key).updateStarCount(value)
       }
     })
   }
 
   updateStarSprites(packet) {
     if (packet && packet.data && packet.data.stars) {
-      SceneUtils.updateMap(packet.data.stars, this.starMap, (star) => {
-        const sprite = new Star(this, star.coordinates.x, star.coordinates.y, 'star')
-        sprite.setData('uuid', star.uuid)
-        this.starGroup.add(sprite)
-        return sprite
-      })
+      SceneUtils.updateMap(
+          packet.data.stars,
+          this.starMap,
+          star => {
+            const sprite = new Star(this, star.coordinates.x, star.coordinates.y, 'star')
+            sprite.setData('uuid', star.uuid)
+            this.starGroup.add(sprite)
+            return sprite
+          }
+      )
     }
   }
 
