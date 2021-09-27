@@ -6,8 +6,6 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"runtime"
-	"time"
 	"unlock/models"
 )
 
@@ -42,14 +40,14 @@ func main() {
 		serveWebSocket(lobbyRepository, upgrader, writer, request)
 	})
 
-	go func () {
-		for {
-			select {
-			case <- time.Tick(10 * time.Second):
-				log.Println("Number of goroutine running: ", runtime.NumGoroutine())
-			}
-		}
-	}()
+	//go func () {
+	//	for {
+	//		select {
+	//		case <- time.Tick(10 * time.Second):
+	//			log.Println("Number of goroutine running: ", runtime.NumGoroutine())
+	//		}
+	//	}
+	//}()
 
 	port := os.Getenv("PORT")
 	if port == "" {

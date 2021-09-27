@@ -1,6 +1,5 @@
 import {Input, Math, Scene} from 'phaser'
 import Axolotl from '../../models/sprites/axolotl'
-import lodash from 'lodash'
 import PacketClientSceneFloatingIslandsCollide from '../../models/packets/packet-client-scene-floating-islands-collide'
 import PacketClientSceneFloatingIslandsFall from '../../models/packets/packet-client-scene-floating-islands-fall';
 import PacketClientSceneMovement from '../../models/packets/packet-client-scene-movement'
@@ -65,7 +64,8 @@ export default class GameFloatingIslandsScene extends Scene {
       const key = islandSprite.getData('key')
 
       if (axolotlSprite.y < islandSprite.y - axolotlSprite.body.halfHeight) {
-        this.throttledEmitCollidePacket(key)
+        // noinspection JSIgnoredPromiseFromCall
+        store.dispatch('sendPacket', new PacketClientSceneFloatingIslandsCollide(key))
       }
     })
 
@@ -94,11 +94,6 @@ export default class GameFloatingIslandsScene extends Scene {
       loop: true,
       paused: false
     })
-
-    this.throttledEmitCollidePacket = lodash.throttle(
-        key => store.dispatch('sendPacket', new PacketClientSceneFloatingIslandsCollide(key)),
-        200
-    )
   }
 
   createBackground(key, count, scrollFactor) {
@@ -245,8 +240,6 @@ export default class GameFloatingIslandsScene extends Scene {
   }
 
   processLoss() {
-    // this.followRemainingPlayers()
-
     // noinspection JSIgnoredPromiseFromCall
     store.dispatch('sendPacket', new PacketClientSceneFloatingIslandsFall())
   }

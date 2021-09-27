@@ -73,9 +73,10 @@ export default class GameSpaceVegetablesScene extends Scene {
       laserGameObject.destroy()
       vegetableGameObject.destroy()
       this.gameWon = true
-      store.dispatch('sendPacket', new PacketClientWin())
       this.vegetableSmallFirst.clear(true)
       this.vegetableSmallSecond.clear(true)
+      // noinspection JSIgnoredPromiseFromCall
+      store.dispatch('sendPacket', new PacketClientWin())
     })
 
     // Camera
