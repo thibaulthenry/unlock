@@ -240,6 +240,23 @@ export default class GameFloatingIslandsScene extends Scene {
   }
 
   processLoss() {
+    this.time.delayedCall(
+        500,
+        () => {
+          this.add.rectangle((this.scale.width + 30) / 2, -150, this.sceneWidth + 60, 150, 0xff8989)
+              .setScrollFactor(0, 0)
+              .setStrokeStyle(10, 0xffffff)
+              .setDepth(10)
+
+          this.add.text(this.scale.width / 2, -150, "Défaite", {fontFamily: '"Brush Script MT"', fontSize: '120px', color: '#ffffff'})
+              .setOrigin(0.5, 0.5)
+              .setScrollFactor(0, 0)
+              .setDepth(10);
+        } ,
+        null,
+        this
+    )
+
     // noinspection JSIgnoredPromiseFromCall
     store.dispatch('sendPacket', new PacketClientSceneFloatingIslandsFall())
   }

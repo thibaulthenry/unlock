@@ -29,6 +29,10 @@ func (packet *PacketServerGameWait) Send(lobby *Lobby) (err error) {
 		lobby.State = constants.LobbyStateStarted
 	}
 
+	if lobby.State != constants.LobbyStateStarted {
+		return errors.New("Trying to start new game on lobby that is not started")
+	}
+
 	game, exists := lobby.CurrentGame()
 	if exists {
 		for uuid, client := range lobby.Clients {
@@ -53,7 +57,9 @@ func (packet *PacketServerGameWait) Send(lobby *Lobby) (err error) {
 		return NewPacketServerGameStart().Send(lobby)
 	})
 
-	lobby.Broadcast <- payload
+	if lobby.State == constants.LobbyStateStarted {
+		lobby.Broadcast <- payload
+	}
 
 	return lobby.PushToFirestore()
 }

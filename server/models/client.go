@@ -3,6 +3,7 @@ package models
 import (
 	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
+	"github.com/pkg/errors"
 	"log"
 	"time"
 	"unlock/constants"
@@ -32,6 +33,23 @@ func NewClient(connection *websocket.Conn, lobbyRepository *LobbyRepository) *Cl
 	}
 }
 
+func (client *Client) HandleGameDataOnLeave() (err error) {
+	lobby := client.Lobby
+	game, gameExists := lobby.CurrentGame()
+
+	if  _, clientExists := lobby.Clients[client.Uuid]; !clientExists || !gameExists {
+		return errors.New("Client is not in lobby or no current game started")
+	}
+
+	switch game.Data.(type) {
+	case *DataSceneFloatingIslands:
+		packetFall := &PacketClientSceneFloatingIslandFall{}
+		return packetFall.Receive(client)
+	}
+
+	return nil
+}
+
 func (client *Client) initConnection() (err error) {
 	client.Connection.SetReadLimit(constants.ParametersMaxMessageSize)
 
@@ -52,6 +70,11 @@ func (client *Client) quit() (err error) {
 
 	err = client.Connection.Close()
 	if err != nil || lobby == nil {
+		return err
+	}
+
+	err = client.HandleGameDataOnLeave()
+	if err != nil {
 		return err
 	}
 

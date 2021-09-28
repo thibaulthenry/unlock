@@ -79,6 +79,7 @@ export default {
     return {
       items: [
         {src: 'https://firebasestorage.googleapis.com/v0/b/unlock-db.appspot.com/o/games%2Fgame_falling_apples.png?alt=media'},
+        {src: 'https://firebasestorage.googleapis.com/v0/b/unlock-db.appspot.com/o/games%2Fgame_floating_islands.png?alt=media'},
         {src: 'https://firebasestorage.googleapis.com/v0/b/unlock-db.appspot.com/o/games%2Fgame_space_vegetables.png?alt=media'},
         {src: 'https://firebasestorage.googleapis.com/v0/b/unlock-db.appspot.com/o/games%2Fgame_star_wars.png?alt=media'},
       ],
