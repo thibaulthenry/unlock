@@ -24,7 +24,7 @@
             touchless
             hide-overlay
         >
-          <Ladder v-if="$route.name === 'lobbies'"/>
+          <Leaderboard v-if="$route.name === 'lobbies'"/>
           <Settings v-else/>
         </v-navigation-drawer>
 
@@ -41,7 +41,7 @@
 <script>
 import Footer from './components/global/Footer'
 import GameFooter from './components/global/GameFooter'
-import Ladder from './components/Ladder'
+import Leaderboard from './components/Leaderboard'
 import Navigation from './components/global/Navigation'
 import Settings from './components/Settings'
 import Snackbar from './components/global/Snackbar'
@@ -49,7 +49,7 @@ import Snackbar from './components/global/Snackbar'
 export default {
   components: {
     Settings,
-    Ladder,
+    Leaderboard,
     Footer,
     GameFooter,
     Navigation,

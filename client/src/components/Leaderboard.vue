@@ -6,7 +6,7 @@
       dark
   >
     <v-card-title>
-      {{ $t('settings.ladder') }}
+      {{ $t('settings.leaderboard') }}
       <span
           v-if="lobby"
           class="overline ml-auto"

@@ -68,7 +68,7 @@ const messages = {
     },
     settings: {
       capacity: 'Lobby capacity',
-      ladder: 'Leaderboard',
+      leaderboard: 'Leaderboard',
       name: 'Player nickname',
       owner: 'Lobby owner',
       points: 'Keys',
@@ -155,7 +155,7 @@ const messages = {
     },
     settings: {
       capacity: 'Capacité du lobby',
-      ladder: 'Classement',
+      leaderboard: 'Classement',
       name: 'Pseudo de joueur',
       owner: 'Propriétaire du lobby',
       points: 'Clefs',
