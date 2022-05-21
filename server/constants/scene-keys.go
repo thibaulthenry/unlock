@@ -10,8 +10,8 @@ const (
 )
 
 var GameKeyMap = map[string]SceneKey{
-	// "0": SceneKeyGameFallingApples,
+	"0": SceneKeyGameFallingApples,
 	"1": SceneKeyGameFloatingIslands,
-	// "2": SceneKeyGameSpaceVegetables,
-	// "0": SceneKeyGameStarWars,
+	"2": SceneKeyGameSpaceVegetables,
+	"3": SceneKeyGameStarWars,
 }

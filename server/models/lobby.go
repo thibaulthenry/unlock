@@ -7,6 +7,7 @@ import (
 	"math"
 	"math/rand"
 	"reflect"
+	"strconv"
 	"sync"
 	"time"
 	"unlock/constants"
@@ -133,20 +134,20 @@ func (lobby *Lobby) InterruptAllTimeouts() {
 }
 
 func (lobby *Lobby) NextGame() (err error) {
-	//var previousSceneKey constants.SceneKey
-	//
-	//if previousGame, exists := lobby.Games[lobby.CurrentGameUuid]; exists {
-	//	lobby.PreviousGameUuid = previousGame.Uuid
-	//	previousSceneKey = previousGame.SceneKey
-	//}
-	//
-	//var sceneKey constants.SceneKey
-	//gameKeysLength := len(constants.GameKeyMap) + 1
-	//
-	//for sceneKey == "" || previousSceneKey == sceneKey {
-	//	sceneKey = constants.GameKeyMap[strconv.Itoa(rand.Intn(gameKeysLength))]
-	//}
-	sceneKey := constants.SceneKeyGameFloatingIslands
+	var previousSceneKey constants.SceneKey
+
+	if previousGame, exists := lobby.Games[lobby.CurrentGameUuid]; exists {
+		lobby.PreviousGameUuid = previousGame.Uuid
+		previousSceneKey = previousGame.SceneKey
+	}
+
+	var sceneKey constants.SceneKey
+	gameKeysLength := len(constants.GameKeyMap) + 1
+
+	for sceneKey == "" || previousSceneKey == sceneKey {
+		sceneKey = constants.GameKeyMap[strconv.Itoa(rand.Intn(gameKeysLength))]
+	}
+	//sceneKey := constants.SceneKeyGameFloatingIslands
 
 	game, err := NewGame(sceneKey)
 	if err != nil {
