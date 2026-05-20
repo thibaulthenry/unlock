@@ -1,6 +1,5 @@
 import Lobby from '@/models/data/lobby';
 import LobbyStates from '@/constants/lobby-states';
-import Client from '@/models/data/client';
 
 describe('Lobby Model', () => {
   let lobby;

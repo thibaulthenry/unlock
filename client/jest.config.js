@@ -11,10 +11,13 @@ module.exports = {
   },
   snapshotSerializers: ['jest-serializer-vue'],
   setupFilesAfterEnv: ['<rootDir>/tests/setup.js'],
+  testEnvironment: 'jsdom',
+  testEnvironmentOptions: {
+    url: 'http://localhost/'
+  },
   testMatch: [
     '**/tests/unit/**/*.spec.(js|jsx|ts|tsx)|**/__tests__/*.(js|jsx|ts|tsx)'
   ],
-  testURL: 'http://localhost/',
   watchPlugins: [
     'jest-watch-typeahead/filename',
     'jest-watch-typeahead/testname'

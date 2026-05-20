@@ -1,6 +1,4 @@
 import store from '@/services/store';
-import Client from '@/models/data/client';
-import Lobby from '@/models/data/lobby';
 
 describe('Vuex Store', () => {
   beforeEach(() => {
