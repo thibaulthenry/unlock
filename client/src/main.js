@@ -1,26 +1,20 @@
-import Vue from 'vue'
-import FlagIcon from 'vue-flag-icon'
-import lodash from 'lodash'
+import { createApp } from 'vue'
+import App from './App.vue'
 import router from './services/router'
-import firestore from './services/firestore'
 import store from './services/store'
 import vuetify from './services/vuetify'
 import i18n from './services/i18n'
-import App from './App.vue'
+import lodash from 'lodash'
 
-Vue.use(FlagIcon)
+const app = createApp(App)
 
-Vue.config.productionTip = false
+app.config.globalProperties.$_ = lodash
+app.config.globalProperties.$window = window
+app.config.globalProperties.$document = document
 
-Vue.prototype.$document = document
-Vue.prototype.$window = window
-Vue.prototype.$_ = lodash
-Vue.prototype.$fire = firestore
+app.use(router)
+app.use(store)
+app.use(vuetify)
+app.use(i18n)
 
-new Vue({
-  router: router,
-  store: store,
-  vuetify: vuetify,
-  i18n: i18n,
-  render: h => h(App),
-}).$mount('#app')
+app.mount('#app')

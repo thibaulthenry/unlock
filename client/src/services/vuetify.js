@@ -1,18 +1,18 @@
-import Vue from 'vue'
-import Vuetify from 'vuetify'
-import fr from 'vuetify/es5/locale/fr'
-import en from 'vuetify/es5/locale/en'
-import 'vuetify/dist/vuetify.min.css'
+import { createVuetify } from 'vuetify'
+import * as components from 'vuetify/components'
+import * as directives from 'vuetify/directives'
+import { fr, en } from 'vuetify/locale'
+import 'vuetify/styles'
 import '@mdi/font/css/materialdesignicons.css'
 
-Vue.use(Vuetify)
-
-export default new Vuetify({
-    icons: {
-        iconfont: 'mdiSvg',
-    },
-    lang: {
+export default createVuetify({
+    components,
+    directives,
+    locale: {
         locales: { fr, en },
         current: 'fr'
+    },
+    theme: {
+        defaultTheme: 'light'
     }
 })

@@ -1,6 +1,4 @@
-import {vuexfireMutations, firestoreAction} from 'vuexfire'
 import Client from '../models/data/client'
-import firestore from './firestore'
 import Game from '../models/data/game'
 import i18n from './i18n'
 import Lobby from '../models/data/lobby'
@@ -11,17 +9,10 @@ import PacketServerGameStart from '../models/packets/packet-server-game-start'
 import PacketServerGameWait from '../models/packets/packet-server-game-wait'
 import PacketServerLobbyEnd from '../models/packets/packet-server-lobby-end'
 import PacketServerLobbyInterrupt from '../models/packets/packet-server-lobby-interrupt'
-import Vuex from 'vuex'
-import Vue from 'vue'
+import { createStore } from 'vuex'
 
-Vue.use(Vuex)
-
-export default new Vuex.Store({
+export default createStore({
   state: {
-    _client: {
-      name: 'Player'
-    },
-
     client: new Client({
       name: 'Player'
     }),
@@ -30,13 +21,7 @@ export default new Vuex.Store({
 
     footerMinimized: false,
 
-    _game: null,
     game: null,
-
-    _lobby: {
-      capacity: 5,
-      pointsGoal: 5
-    },
 
     lobby: new Lobby({
       capacity: 5,
@@ -72,15 +57,8 @@ export default new Vuex.Store({
   },
 
   mutations: {
-    ...vuexfireMutations,
-
     SET_CLIENT(state, {client}) {
-      if (!state._client) {
-        state._client = {}
-      }
-
-      state._client = client
-      state.client = new Client(state._client)
+      state.client = new Client(client)
     },
 
     SET_DRAWER(state, {drawer}) {
@@ -92,35 +70,19 @@ export default new Vuex.Store({
     },
 
     SET_GAME(state, {game}) {
-      state._game = game
-      state.game = new Game(state._game)
+      state.game = game ? new Game(game) : null
     },
 
     SET_LOBBY_CAPACITY(state, {lobbyCapacity}) {
-      if (!state._lobby) {
-        state._lobby = {}
-      }
-
-      state._lobby.capacity = lobbyCapacity
-      state.lobby = new Lobby(state._lobby)
+      state.lobby.capacity = lobbyCapacity
     },
 
     SET_LOBBY_CODE(state, {lobbyCode}) {
-      if (!state._lobby) {
-        state._lobby = {}
-      }
-
-      state._lobby.code = lobbyCode
-      state.lobby = new Lobby(state._lobby)
+      state.lobby.code = lobbyCode
     },
 
     SET_LOBBY_POINTS_GOAL(state, {lobbyPointsGoal}) {
-      if (!state._lobby) {
-        state._lobby = {}
-      }
-
-      state._lobby.pointsGoal = lobbyPointsGoal
-      state.lobby = new Lobby(state._lobby)
+      state.lobby.pointsGoal = lobbyPointsGoal
     },
 
     SET_PLAY_MUSIC_LOOP(state, {play}) {
@@ -165,36 +127,6 @@ export default new Vuex.Store({
   },
 
   actions: {
-    bindLobby: firestoreAction(({state, bindFirestoreRef}) => {
-      if (!state.lobby?.code) {
-        return
-      }
-
-      return bindFirestoreRef(
-          '_lobby',
-          firestore
-              .doc(`/lobbies/${state.lobby.code}`)
-              .withConverter({
-                fromFirestore(snapshot, options) {
-                  const data = snapshot.data(options)
-                  state.lobby = new Lobby(data)
-
-                  const game = state.lobby.getNewestGame()
-                  if (game) state.game = new Game(game)
-
-                  const client = state.lobby.clients[state.client.uuid]
-                  if (client) state.client = new Client(client)
-
-                  return data
-                },
-
-                toFirestore(lobby) {
-                  return lobby
-                }
-              })
-      )
-    }),
-
     connect(store, lobbyCode) {
       store.commit('SET_LOBBY_CODE', {lobbyCode})
 
@@ -274,11 +206,7 @@ export default new Vuex.Store({
       } else {
         store.dispatch('notifyError', i18n.t('snackbar.error.packetsLost'))
       }
-    },
-
-    unbindLobby: firestoreAction(({unbindFirestoreRef}) => {
-      unbindFirestoreRef('_lobby')
-    }),
+    }
   },
 
   modules: {}

@@ -1,8 +1,4 @@
-import Vue from 'vue'
-import VueI18n from 'vue-i18n'
-
-Vue.use(VueI18n)
-Vue.prototype.$i
+import { createI18n } from 'vue-i18n'
 
 const messages = {
   gb: {
@@ -177,4 +173,8 @@ const messages = {
   }
 }
 
-export default new VueI18n({locale: 'fr', messages})
+export default createI18n({
+  legacy: false,
+  locale: 'fr',
+  messages
+})
