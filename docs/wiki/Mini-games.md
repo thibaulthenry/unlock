@@ -1,6 +1,6 @@
 # Mini-jeux
 
-Trois mini-jeux sont disponibles. Le serveur tire le suivant au hasard,
+Quatre mini-jeux sont disponibles. Le serveur tire le suivant au hasard,
 en évitant de relancer immédiatement le même que la manche précédente.
 
 Chaque manche dure environ **30 secondes** (`duration` dans
@@ -27,6 +27,46 @@ latéralement pour attraper les pommes.
 - Game type : Solo
 - WinnersNumber : 1
 - WinReward : 1 clé
+
+## Îles flottantes (`GameFloatingIslands`)
+
+![Îles flottantes](../screenshots/04-game-floating-islands.png)
+
+> Restez en vie en sautant entre les îles flottantes.
+
+### Règles
+
+Les axolotls sont propulsés au sommet d'un ciel rempli d'îles disposées
+sur plusieurs étages (4 à 7 selon le nombre de joueurs). Chaque île
+**s'effondre** quelques centaines de millisecondes après qu'un joueur
+s'y pose : 250 ms pour les petites, 500 ms pour les grandes. Le dernier
+survivant remporte la manche.
+
+- **Win condition** : `Timeout` — dernier joueur en vie.
+- **Contrôles** : ← → (déplacement), Espace (saut). Vitesse 1,5× celle
+  des autres mini-jeux (`speedFactor` sur l'axolotl).
+- Quand un joueur sort des limites du monde par le bas, le packet
+  `CLIENT_SCENE_FLOATING_ISLANDS_FALL` est envoyé et il est éliminé.
+
+### Anti-triche : surveillance du focus
+
+Ce mini-jeu surveille la **visibilité de l'onglet** : si un joueur change
+d'onglet (Alt-Tab, etc.) pendant la partie, son client émet un packet
+`CLIENT_FOCUS` avec `state: false`, et le serveur déclenche
+automatiquement un `CLIENT_SCENE_FLOATING_ISLANDS_FALL` pour l'éliminer
+(cf. `server/models/game.go:HandleRequiredFocus`).
+
+### Côté serveur
+
+- Game type : Solo
+- WinnersNumber : 1
+- WinReward : 1 clé
+- Duration : 30 000 ms
+
+État serveur dans `server/models/data_scene_floating_islands.go` :
+- Une map d'`Island` avec leur état (`Safe`, `Updating`, détruite)
+- `RemainingPlayers` / `Losers` (set de UUIDs)
+- `RemainingPlayersCount` (pour détecter le dernier survivant)
 
 ## Légumes de l'espace (`GameSpaceVegetables`)
 
@@ -88,9 +128,14 @@ FIRESTORE_EMULATOR_HOST=127.0.0.1:8181 GCP_PROJECT_ID=unlock-local \
 Le code de chaque scène est dans `client/src/models/scenes/` :
 
 - `game-falling-apples-scene.js`
+- `game-floating-islands-scene.js`
 - `game-space-vegetables-scene.js`
 - `game-star-wars-scene.js`
 
-Et la logique métier serveur dans `server/models/data_scene_star_wars.go`
-(pour StarWars qui maintient un état serveur des étoiles ; les deux
-autres sont gérés côté client avec validation par `CLIENT_WIN`).
+Logique métier serveur :
+- `server/models/data_scene_star_wars.go` — StarWars (positions des étoiles)
+- `server/models/data_scene_floating_islands.go` — Floating Islands
+  (îles, joueurs restants, étages, focus)
+
+Les deux autres mini-jeux (FallingApples, SpaceVegetables) sont gérés
+côté client avec validation par `CLIENT_WIN`.

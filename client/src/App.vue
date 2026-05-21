@@ -21,7 +21,7 @@
             theme="dark"
             touchless
         >
-          <Ladder v-if="$route.name === 'lobbies'"/>
+          <Leaderboard v-if="$route.name === 'lobbies'"/>
           <Settings v-else/>
         </v-navigation-drawer>
 
@@ -38,7 +38,7 @@
 <script>
 import Footer from './components/global/Footer.vue'
 import GameFooter from './components/global/GameFooter.vue'
-import Ladder from './components/Ladder.vue'
+import Leaderboard from './components/Leaderboard.vue'
 import Navigation from './components/global/Navigation.vue'
 import Settings from './components/Settings.vue'
 import Snackbar from './components/global/Snackbar.vue'
@@ -46,7 +46,7 @@ import Snackbar from './components/global/Snackbar.vue'
 export default {
   components: {
     Settings,
-    Ladder,
+    Leaderboard,
     Footer,
     GameFooter,
     Navigation,

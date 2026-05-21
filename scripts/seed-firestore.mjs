@@ -22,15 +22,23 @@ const base = `http://${host}/v1/projects/${project}/databases/(default)/document
 const games = {
   GameFallingApples: {
     sceneKey: 'GameFallingApples',
-    duration: 30,
+    duration: 30000,
     type: 0,             // Solo
     winCondition: 0,     // First
     winnersNumber: 1,
     winReward: 1,
   },
+  GameFloatingIslands: {
+    sceneKey: 'GameFloatingIslands',
+    duration: 30000,
+    type: 0,             // Solo
+    winCondition: 1,     // Timeout (le dernier survivant gagne)
+    winnersNumber: 1,
+    winReward: 1,
+  },
   GameSpaceVegetables: {
     sceneKey: 'GameSpaceVegetables',
-    duration: 30,
+    duration: 30000,
     type: 0,
     winCondition: 1,     // Timeout
     winnersNumber: 1,
@@ -38,7 +46,7 @@ const games = {
   },
   GameStarWars: {
     sceneKey: 'GameStarWars',
-    duration: 30,
+    duration: 30000,
     type: 0,
     winCondition: 0,
     winnersNumber: 1,

@@ -44,6 +44,36 @@ Le propriétaire demande à démarrer la partie. Le serveur vérifie
 { "label": "CLIENT_LOBBY_START" }
 ```
 
+### `CLIENT_FOCUS`
+
+Émis dès qu'un joueur change la visibilité de son onglet
+(`document.visibilitychange`). Le serveur s'en sert dans Floating Islands
+pour éliminer un joueur qui Alt-Tab pendant la partie.
+
+```json
+{ "label": "CLIENT_FOCUS", "state": true }
+```
+
+### `CLIENT_SCENE_FLOATING_ISLANDS_COLLIDE`
+
+Émis chaque fois que l'axolotl atterrit sur une île. Le serveur lance un
+timeout de 250 ms (petite île) ou 500 ms (grande) avant de faire passer
+l'île à l'état suivant (instable puis détruite).
+
+```json
+{ "label": "CLIENT_SCENE_FLOATING_ISLANDS_COLLIDE", "key": "320" }
+```
+
+### `CLIENT_SCENE_FLOATING_ISLANDS_FALL`
+
+Émis quand l'axolotl sort des limites du monde par le bas (chute hors du
+ciel). Le serveur marque le client comme perdant. Si un seul joueur
+reste, il est déclaré vainqueur via `CLIENT_WIN`.
+
+```json
+{ "label": "CLIENT_SCENE_FLOATING_ISLANDS_FALL" }
+```
+
 ### `CLIENT_SCENE_MOVEMENT`
 
 Émis ~30 fois par seconde par chaque client pour propager sa position

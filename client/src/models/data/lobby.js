@@ -36,18 +36,33 @@ export default class Lobby {
         : []
   }
 
-  getPlayersMap(points, clientPoints) {
+  // Accepte soit :
+  //   - filterPredicate(player) -> bool (nouvelle API, utilisée par
+  //     SceneUtils.updatePlayersSprites)
+  //   - (points, clientPoints) (API héritée pour pre-game-scene : ne garde
+  //     que les joueurs dont le score correspond à clientPoints)
+  getPlayersMap(filterOrPoints, clientPoints) {
     const map = new Map()
+    const isPredicate = typeof filterOrPoints === 'function'
 
     this.getPlayers().forEach(player => {
-      if (points && (clientPoints !== null && clientPoints !== undefined)) {
-        if (points[player.uuid] === clientPoints) {
+      if (isPredicate) {
+        if (filterOrPoints(player)) {
           map.set(player.uuid, player)
         }
-      } else {
-        map.set(player.uuid, player)
+        return
       }
+
+      if (filterOrPoints && (clientPoints !== null && clientPoints !== undefined)) {
+        if (filterOrPoints[player.uuid] === clientPoints) {
+          map.set(player.uuid, player)
+        }
+        return
+      }
+
+      map.set(player.uuid, player)
     })
+
     return map
   }
 

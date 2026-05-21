@@ -1,8 +1,8 @@
 # Unlock
 
-> Jeu multijoueur en temps réel inspiré du party game. Jusqu'à 5 joueurs
-> s'affrontent dans une suite de mini-jeux ; le premier qui atteint le nombre
-> de clés requis (`pointsGoal`) gagne la partie et s'échappe du donjon.
+> Jeu multijoueur en temps réel inspiré du party game. Jusqu'à 10 joueurs
+> s'affrontent dans une suite de **quatre mini-jeux** ; le premier qui atteint
+> le nombre de clés requis (`pointsGoal`) gagne la partie et s'échappe du donjon.
 
 ![Page d'accueil](docs/screenshots/01-home.png)
 
@@ -11,6 +11,7 @@
 - [Concept](#concept)
 - [Les mini-jeux](#les-mini-jeux)
   - [Chute de pommes (Falling Apples)](#chute-de-pommes-falling-apples)
+  - [Îles flottantes (Floating Islands)](#îles-flottantes-floating-islands)
   - [Légumes de l'espace (Space Vegetables)](#légumes-de-lespace-space-vegetables)
   - [Guerre des étoiles (Star Wars)](#guerre-des-étoiles-star-wars)
 - [Déroulement d'une partie](#déroulement-dune-partie)
@@ -49,7 +50,7 @@ sur les axolotls.
 ## Les mini-jeux
 
 Chaque mini-jeu dure environ 30 secondes. Le serveur tire le suivant au
-hasard parmi les trois disponibles, en évitant de relancer deux fois de
+hasard parmi les quatre disponibles, en évitant de relancer deux fois de
 suite le même.
 
 ### Chute de pommes (Falling Apples)
@@ -64,6 +65,24 @@ pour les attraper. Premier à 7 pommes gagne la manche.
 
 - **Contrôles** : flèches gauche / droite (ou A / D) pour se déplacer.
 - **Condition de victoire** : `First` (premier à atteindre le quota).
+
+### Îles flottantes (Floating Islands)
+
+![Îles flottantes](docs/screenshots/04-game-floating-islands.png)
+
+> **Objectif** : rester en vie en sautant entre les îles flottantes.
+
+Les axolotls tombent dans un ciel rempli d'îles éparpillées sur plusieurs
+étages. Chaque île survit quelques centaines de millisecondes au passage
+d'un joueur avant de **s'effondrer** : il faut sans cesse sauter d'île
+en île. Le dernier survivant gagne la manche.
+
+- **Contrôles** : ← → (déplacement), Espace (saut). Les petites îles
+  s'effondrent plus vite (250 ms) que les grandes (500 ms).
+- **Condition de victoire** : `Timeout` — dernier joueur en vie. Si le
+  joueur **change d'onglet pendant la partie**, son axolotl tombe
+  automatiquement (le serveur surveille le focus via le packet
+  `CLIENT_FOCUS`).
 
 ### Légumes de l'espace (Space Vegetables)
 
@@ -236,8 +255,10 @@ Les `label` côté JSON sont la source de vérité. Une rupture de contrat
 entre les deux côtés casse le jeu silencieusement → toute modification
 doit être faite des deux côtés simultanément.
 
-- **CLIENT_* → serveur** : `CLIENT_CONNECTION`, `CLIENT_LOBBY_START`,
-  `CLIENT_SCENE_MOVEMENT`, `CLIENT_SCENE_STAR_WARS_COLLECT`, `CLIENT_WIN`.
+- **CLIENT_* → serveur** : `CLIENT_CONNECTION`, `CLIENT_FOCUS`,
+  `CLIENT_LOBBY_START`, `CLIENT_SCENE_FLOATING_ISLANDS_COLLIDE`,
+  `CLIENT_SCENE_FLOATING_ISLANDS_FALL`, `CLIENT_SCENE_MOVEMENT`,
+  `CLIENT_SCENE_STAR_WARS_COLLECT`, `CLIENT_WIN`.
 - **SERVER_* → clients** : `SERVER_CONNECTION`, `SERVER_COUNTDOWN`,
   `SERVER_GAME_START`, `SERVER_GAME_WAIT`, `SERVER_LOBBY_COLLAPSE`,
   `SERVER_LOBBY_END`, `SERVER_LOBBY_INTERRUPT`, `SERVER_SCENE_DATA`,

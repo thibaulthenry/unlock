@@ -68,7 +68,9 @@ export default {
     return {
       items: [
         {src: carouselUrl('game_falling_apples')},
+        {src: carouselUrl('game_floating_islands')},
         {src: carouselUrl('game_space_vegetables')},
+        {src: carouselUrl('game_star_wars')},
       ],
       loadingCreate: false,
       loadingJoin: false,

@@ -42,8 +42,10 @@ import bus from '@/services/event-bus'
 import EndScene from '@/models/scenes/end-scene'
 import EventTypes from '@/constants/event-types'
 import GameFallingApplesScene from '@/models/scenes/game-falling-apples-scene'
+import GameFloatingIslandsScene from '@/models/scenes/game-floating-islands-scene'
 import GameSpaceVegetablesScene from '@/models/scenes/game-space-vegetables-scene'
 import GameStarWarsScene from '@/models/scenes/game-star-wars-scene'
+import PacketClientFocus from '@/models/packets/packet-client-focus'
 import LobbyScene from '@/models/scenes/lobby-scene'
 import LobbyStates from '@/constants/lobby-states'
 import Phaser from 'phaser'
@@ -99,6 +101,7 @@ export default {
       switch (sceneKey) {
         case SceneKeys.END: return EndScene
         case SceneKeys.GAME_FALLING_APPLES: return GameFallingApplesScene
+        case SceneKeys.GAME_FLOATING_ISLANDS: return GameFloatingIslandsScene
         case SceneKeys.GAME_SPACE_VEGETABLES: return GameSpaceVegetablesScene
         case SceneKeys.GAME_STAR_WARS: return GameStarWarsScene
         case SceneKeys.LOBBY: return LobbyScene
@@ -119,6 +122,10 @@ export default {
 
     preventRightClick(event) {
       event.preventDefault()
+    },
+
+    handleVisibilityChange() {
+      this.$store.dispatch('sendPacket', new PacketClientFocus(!this.$document.hidden))
     },
 
     resetMusicLoop() {
@@ -160,6 +167,7 @@ export default {
 
   mounted() {
     this.$window.addEventListener('contextmenu', this.preventRightClick)
+    this.$document.addEventListener('visibilitychange', this.handleVisibilityChange)
     bus.$emit(EventTypes.LISTEN_MOUSE_EVENTS)
     bus.$on(EventTypes.GAME_CHANGE_SCENE, (args) => this.changeScene(args.key, args.data))
     bus.$on(EventTypes.GAME_COUNTDOWN, this.tickCountdown)
@@ -193,6 +201,7 @@ export default {
   beforeUnmount() {
     this.resetMusicLoop()
     this.$window.removeEventListener('contextmenu', this.preventRightClick)
+    this.$document.removeEventListener('visibilitychange', this.handleVisibilityChange)
     bus.$off(EventTypes.GAME_CHANGE_SCENE)
     bus.$off(EventTypes.GAME_COUNTDOWN)
     bus.$off(EventTypes.LOBBY_INTERRUPT)

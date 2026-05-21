@@ -24,6 +24,7 @@ const messages = {
       },
       names: {
         GameFallingApples: 'Falling Apples',
+        GameFloatingIslands: 'Floating Islands',
         GameSpaceVegetables: 'Space Vegetables',
         GameStarWars: 'Star Wars',
       },
@@ -36,6 +37,7 @@ const messages = {
         },
         game: {
           GameFallingApples: 'Collect 7 apples before other players',
+          GameFloatingIslands: 'Stay alive by jumping between floating islands',
           GameSpaceVegetables: 'Shoot the central vegetable',
           GameStarWars: 'Collect 6 stars before other players',
         },
@@ -62,7 +64,7 @@ const messages = {
     },
     settings: {
       capacity: 'Lobby capacity',
-      ladder: 'Leaderboard',
+      leaderboard: 'Leaderboard',
       name: 'Player nickname',
       owner: 'Lobby owner',
       points: 'Keys',
@@ -109,6 +111,7 @@ const messages = {
       },
       names: {
         GameFallingApples: 'Chute de pommes',
+        GameFloatingIslands: 'Îles flottantes',
         GameSpaceVegetables: 'Légumes de l\'espace',
         GameStarWars: 'Guerre des étoiles',
       },
@@ -121,6 +124,7 @@ const messages = {
         },
         game: {
           GameFallingApples: 'Récoltez 7 pommes avant les autres joueurs',
+          GameFloatingIslands: 'Restez en vie en sautant entre les îles flottantes',
           GameSpaceVegetables: 'Tirez pour éliminer le légume central',
           GameStarWars: 'Récoltez 6 étoiles avant les autres joueurs',
         },
@@ -147,7 +151,7 @@ const messages = {
     },
     settings: {
       capacity: 'Capacité du lobby',
-      ladder: 'Classement',
+      leaderboard: 'Classement',
       name: 'Pseudo de joueur',
       owner: 'Propriétaire du lobby',
       points: 'Clefs',
