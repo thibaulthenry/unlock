@@ -75,7 +75,7 @@ export default class EndScene extends Scene {
 
     this.add.image(this.sceneWidthMiddle, 300, 'dungeon-logo')
 
-    this.endText = this.add.text(this.sceneWidthMiddle, 600, '' + i18n.t('lobby.states.ended'), {
+    this.endText = this.add.text(this.sceneWidthMiddle, 600, '' + i18n.global.t('lobby.states.ended'), {
       fontFamily: '"Brush Script MT"',
       fontSize: '130px',
       color: '#ffffff'
@@ -107,17 +107,15 @@ export default class EndScene extends Scene {
 
     // Particles
 
-    this.particles = this.add.particles('key')
-
-    this.particles.createEmitter({
-      frame: {frames: [0]},
+    this.particles = this.add.particles(0, 0, 'key', {
+      frame: { frames: [0] },
       scaleX: 0.8,
       scaleY: 0.8,
       speedY: -80,
       quantity: 1,
       lifespan: 1250,
-      alpha: {start: 1, end: 0},
-      on: false
+      alpha: { start: 1, end: 0 },
+      emitting: false,
     })
   }
 
@@ -186,7 +184,7 @@ export default class EndScene extends Scene {
 
     bus.$on(EventTypes.LANGUAGE_CHANGE, () => {
       if (this.endText) {
-        this.endText.setText('' + i18n.t('lobby.states.ended'))
+        this.endText.setText('' + i18n.global.t('lobby.states.ended'))
       }
     })
 
@@ -265,7 +263,7 @@ export default class EndScene extends Scene {
 
       this.time.addEvent({
         delay: 250,
-        callback: (scene) => scene.particles.emitParticleAt(this.axolotl.body.x + this.axolotl.body.width / 2, this.axolotl.body.y - this.axolotl.body.height / 2),
+        callback: (scene) => scene.particles.emitParticle(1, this.axolotl.body.x + this.axolotl.body.width / 2, this.axolotl.body.y - this.axolotl.body.height / 2),
         args: [this],
         repeat: store.state.lobby.pointsGoal - 1
       })

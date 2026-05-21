@@ -29,3 +29,7 @@ app.config.globalProperties.$fire = firestore
 app.config.globalProperties.$store = storeAdapter
 
 app.mount('#app')
+
+if (import.meta.env.DEV) {
+  window.$store = storeAdapter
+}

@@ -60,17 +60,15 @@ export default class PreGameFallScene extends Scene {
 
     // Particles
 
-    this.particles = this.add.particles('key')
-
-    this.particles.createEmitter({
-      frame: {frames: [0]},
+    this.particles = this.add.particles(0, 0, 'key', {
+      frame: { frames: [0] },
       scaleX: 0.8,
       scaleY: 0.8,
       speedY: -20,
       quantity: 1,
       lifespan: 2500,
-      alpha: {start: 1, end: 0},
-      on: false
+      alpha: { start: 1, end: 0 },
+      emitting: false,
     })
 
     // Physics
@@ -179,7 +177,7 @@ export default class PreGameFallScene extends Scene {
       this.readyToFall = true
       this.axolotl.body.reset(this.axolotl.body.x, this.axolotl.body.y)
       this.axolotl.setMotion({walking: false})
-      this.particles.emitParticleAt(this.axolotl.body.x + this.axolotl.body.width / 2, this.axolotl.body.y - this.axolotl.body.height / 2)
+      this.particles.emitParticle(1, this.axolotl.body.x + this.axolotl.body.width / 2, this.axolotl.body.y - this.axolotl.body.height / 2)
 
       this.time.delayedCall(1000, () => {
         this.sound.play('door-open')
