@@ -64,6 +64,12 @@ until curl -sI --max-time 1 http://127.0.0.1:8080/ 2>/dev/null | grep -q "Bad Re
 done
 echo "  ✓ Serveur Go prêt"
 
+echo "→ Seed des configurations de jeux dans Firestore"
+FIRESTORE_EMULATOR_HOST=127.0.0.1:8181 \
+GCP_PROJECT_ID=unlock-local \
+node scripts/seed-firestore.mjs
+echo "  ✓ /games/* seedés"
+
 if [[ "$WITH_CLIENT" == "true" ]]; then
   if [[ ! -f client/.env.local ]]; then
     cp client/.env.local.example client/.env.local

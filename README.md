@@ -87,6 +87,9 @@ Le script :
 - démarre l'émulateur Firestore sur `127.0.0.1:8181` (UI sur `:4000`),
 - compile et lance le serveur Go sur `:8080` (env `FIRESTORE_EMULATOR_HOST`
   pointé sur l'émulateur, `GCP_PROJECT_ID=unlock-local`),
+- **seed** les documents `/games/{SceneKey}` indispensables au déroulement
+  des mini-jeux via `scripts/seed-firestore.mjs` (durée, type, win condition,
+  reward),
 - crée `client/.env.local` à partir de `.env.local.example` si absent,
 - démarre Vite sur `:3000`,
 - consolide les logs dans `.dev/logs/{firestore,server,client}.log`,
