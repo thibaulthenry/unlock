@@ -73,27 +73,55 @@ Options utiles : `--skip-server`, `--skip-client`, `--skip-infra`, `--dry-run`,
 
 ## Développement local
 
-### Serveur
+La stack complète (Firestore émulateur + serveur Go + client Vite) tourne en
+local sans aucun accès GCP grâce à l'émulateur Firebase.
+
+### Une commande
 
 ```bash
+./dev.sh                # tout
+./dev.sh --no-client    # uniquement Firestore + serveur (pour les smoke tests)
+```
+
+Le script :
+- démarre l'émulateur Firestore sur `127.0.0.1:8181` (UI sur `:4000`),
+- compile et lance le serveur Go sur `:8080` (env `FIRESTORE_EMULATOR_HOST`
+  pointé sur l'émulateur, `GCP_PROJECT_ID=unlock-local`),
+- crée `client/.env.local` à partir de `.env.local.example` si absent,
+- démarre Vite sur `:3000`,
+- consolide les logs dans `.dev/logs/{firestore,server,client}.log`,
+- s'arrête proprement sur Ctrl+C.
+
+Prérequis : `node >= 20`, `go >= 1.21`, `java >= 17` (pour l'émulateur Firestore)
+et `firebase-tools` global (`npm i -g firebase-tools`).
+
+### Démarrage manuel (alternatif)
+
+```bash
+# 1. Émulateur
+firebase emulators:start --only firestore --project=unlock-local
+
+# 2. Serveur
 cd server
-export PORT=8080
-export GCP_PROJECT_ID=unlock-db
-export ALLOWED_ORIGINS=http://localhost:5173,http://localhost:3000
-# Optionnel : émulateur Firestore (firebase emulators:start --only firestore)
-# export FIRESTORE_EMULATOR_HOST=localhost:8080
+PORT=8080 \
+GCP_PROJECT_ID=unlock-local \
+FIRESTORE_EMULATOR_HOST=127.0.0.1:8181 \
+ALLOWED_ORIGINS=http://localhost:3000,http://127.0.0.1:3000 \
 go run .
-```
 
-### Client
-
-```bash
+# 3. Client
 cd client
-cp .env.example .env.local
-# éditer .env.local : VUE_APP_WEBSOCKET_URL=ws://localhost:8080 + config Firebase
+cp .env.local.example .env.local
 npm install
-npm run serve
+npm run dev
 ```
+
+### Smoke test WebSocket
+
+Un script Node minimal valide la chaîne client → serveur → émulateur :
+voir `dev.sh` puis envoyer un paquet `CLIENT_CONNECTION` (cf. `client/src/models/packets/`).
+L'UI émulateur (`http://127.0.0.1:4000/firestore`) permet d'inspecter les
+documents écrits par le serveur en temps réel.
 
 ## Variables d'environnement
 
