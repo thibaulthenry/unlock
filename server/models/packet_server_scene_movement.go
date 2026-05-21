@@ -2,7 +2,6 @@ package models
 
 import (
 	"encoding/json"
-	"github.com/pkg/errors"
 	"unlock/constants"
 )
 
@@ -29,7 +28,7 @@ func NewPacketServerSceneMovement(coordinates *Coordinates, clientUuid string, m
 func (packet *PacketServerSceneMovement) Send(lobby *Lobby) (err error) {
 	payload, err := json.Marshal(packet)
 	if err != nil {
-		return errors.WithStack(err)
+		return err
 	}
 
 	lobby.Broadcast <- payload

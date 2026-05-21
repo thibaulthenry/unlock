@@ -7,14 +7,41 @@ import (
 	"net/http"
 	"os"
 	"runtime"
+	"strings"
 	"time"
 	"unlock/models"
 )
 
-func serveWebSocket(lobbyRepository *models.LobbyRepository, upgrader websocket.Upgrader, w http.ResponseWriter, r *http.Request) {
+var defaultAllowedOrigins = []string{
+	"https://unlock-db.web.app",
+	"https://unlock-db.firebaseapp.com",
+}
+
+func loadAllowedOrigins() map[string]struct{} {
+	raw := os.Getenv("ALLOWED_ORIGINS")
+	var origins []string
+	if raw == "" {
+		origins = defaultAllowedOrigins
+	} else {
+		origins = strings.Split(raw, ",")
+	}
+
+	allowed := make(map[string]struct{}, len(origins)*2)
+	for _, o := range origins {
+		o = strings.TrimSpace(o)
+		if o == "" {
+			continue
+		}
+		allowed[strings.TrimSuffix(o, "/")] = struct{}{}
+		allowed[strings.TrimSuffix(o, "/")+"/"] = struct{}{}
+	}
+	return allowed
+}
+
+func serveWebSocket(lobbyRepository *models.LobbyRepository, upgrader websocket.Upgrader, allowedOrigins map[string]struct{}, w http.ResponseWriter, r *http.Request) {
 	upgrader.CheckOrigin = func(r *http.Request) bool {
-		origin := r.Header.Get("Origin")
-		return origin == "https://unlock-db.web.app" || origin == "https://unlock-db.firebaseapp.com" || origin == "https://unlock-db.web.app/" || origin == "https://unlock-db.firebaseapp.com/"
+		_, ok := allowedOrigins[r.Header.Get("Origin")]
+		return ok
 	}
 
 	connection, err := upgrader.Upgrade(w, r, nil)
@@ -31,6 +58,7 @@ func serveWebSocket(lobbyRepository *models.LobbyRepository, upgrader websocket.
 
 func main() {
 	lobbyRepository := models.NewLobbyRepository()
+	allowedOrigins := loadAllowedOrigins()
 
 	upgrader := websocket.Upgrader{
 		ReadBufferSize:  1024,
@@ -38,15 +66,12 @@ func main() {
 	}
 
 	http.HandleFunc("/", func(writer http.ResponseWriter, request *http.Request) {
-		serveWebSocket(lobbyRepository, upgrader, writer, request)
+		serveWebSocket(lobbyRepository, upgrader, allowedOrigins, writer, request)
 	})
 
-	go func () {
-		for {
-			select {
-			case <- time.Tick(10 * time.Second):
-				log.Println("Number of goroutine running: ", runtime.NumGoroutine())
-			}
+	go func() {
+		for range time.Tick(10 * time.Second) {
+			log.Println("Number of goroutine running: ", runtime.NumGoroutine())
 		}
 	}()
 

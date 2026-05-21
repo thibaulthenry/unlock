@@ -2,7 +2,6 @@ package models
 
 import (
 	"encoding/json"
-	"github.com/pkg/errors"
 	"unlock/constants"
 )
 
@@ -41,7 +40,7 @@ func (packet *PacketServerGameWait) Send(lobby *Lobby) (err error) {
 
 	payload, err := json.Marshal(packet)
 	if err != nil {
-		return errors.WithStack(err)
+		return err
 	}
 
 	err = lobby.NextGame()

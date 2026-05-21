@@ -1,0 +1,13 @@
+# Variables d'env (la version .env.example est versionnée).
+.env
+.env.local
+.env.*.local
+client/.env.production
+
+# Firebase
+.firebase/
+
+# OS / éditeurs
+.DS_Store
+.idea/
+*.swp

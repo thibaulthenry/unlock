@@ -1,0 +1,23 @@
+rules_version = '2';
+
+// Les lobbies sont synchronisés côté client en lecture seule.
+// Toutes les écritures passent par le serveur Go (SDK admin Firestore),
+// qui s'authentifie via le compte de service Cloud Run et n'est donc pas
+// soumis à ces règles.
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /lobbies/{lobbyCode} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    match /games/{gameId} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

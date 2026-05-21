@@ -75,10 +75,12 @@ import Lobby from '../models/data/lobby'
 
 export default {
   data() {
+    const bucket = process.env.VUE_APP_FIREBASE_STORAGE_BUCKET || 'unlock-db.appspot.com'
+    const carouselUrl = name => `https://firebasestorage.googleapis.com/v0/b/${bucket}/o/games%2F${name}.png?alt=media`
     return {
       items: [
-        {src: 'https://firebasestorage.googleapis.com/v0/b/unlock-db.appspot.com/o/games%2Fgame_falling_apples.png?alt=media'},
-        {src: 'https://firebasestorage.googleapis.com/v0/b/unlock-db.appspot.com/o/games%2Fgame_space_vegetables.png?alt=media'},
+        {src: carouselUrl('game_falling_apples')},
+        {src: carouselUrl('game_space_vegetables')},
       ],
       loadingCreate: false,
       loadingJoin: false,

@@ -2,7 +2,6 @@ package models
 
 import (
 	"encoding/json"
-	"github.com/pkg/errors"
 	"unlock/constants"
 )
 
@@ -25,7 +24,7 @@ func NewPacketServerSceneData(data interface{}, sceneKey constants.SceneKey) *Pa
 func (packet *PacketServerSceneData) Send(lobby *Lobby) (err error) {
 	payload, err := json.Marshal(packet)
 	if err != nil {
-		return errors.WithStack(err)
+		return err
 	}
 
 	lobby.Broadcast <- payload

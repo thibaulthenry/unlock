@@ -1,6 +1,6 @@
 package firestore
 
-import "github.com/pkg/errors"
+import "errors"
 
 // GetDocument gets the document which path is /{collectionID}/{documentID} in the project's firestore and
 // put every fields into the target interface
@@ -16,8 +16,8 @@ func GetDocument(collectionID string, documentID string, documentTarget interfac
 
 	snapshot, err := client.Collection(collectionID).Doc(documentID).Get(ctx)
 	if err != nil {
-		return errors.WithStack(err)
+		return err
 	}
 
-	return errors.WithStack(snapshot.DataTo(documentTarget))
+	return snapshot.DataTo(documentTarget)
 }

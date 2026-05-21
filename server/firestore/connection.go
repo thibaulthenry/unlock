@@ -3,8 +3,10 @@ package firestore
 import (
 	"cloud.google.com/go/firestore"
 	"context"
-	"github.com/pkg/errors"
+	"os"
 )
+
+const defaultProjectID = "unlock-db"
 
 var firestoreClient *firestore.Client
 
@@ -16,9 +18,14 @@ func getClient() (client *firestore.Client, ctx context.Context, err error) {
 		return firestoreClient, ctx, nil
 	}
 
-	firestoreClient, err = firestore.NewClient(ctx, "unlock-db")
+	projectID := os.Getenv("GCP_PROJECT_ID")
+	if projectID == "" {
+		projectID = defaultProjectID
+	}
+
+	firestoreClient, err = firestore.NewClient(ctx, projectID)
 	if err != nil {
-		return nil, ctx, errors.WithStack(err)
+		return nil, ctx, err
 	}
 
 	return firestoreClient, ctx, nil

@@ -2,7 +2,6 @@ package models
 
 import (
 	"encoding/json"
-	"github.com/pkg/errors"
 	"unlock/constants"
 )
 
@@ -21,7 +20,7 @@ func NewPacketServerLobbyInterrupt() *PacketServerLobbyInterrupt {
 func (packet *PacketServerLobbyInterrupt) Send(lobby *Lobby) (err error) {
 	payload, err := json.Marshal(packet)
 	if err != nil {
-		return errors.WithStack(err)
+		return err
 	}
 
 	lobby.InterruptAllTimeouts()

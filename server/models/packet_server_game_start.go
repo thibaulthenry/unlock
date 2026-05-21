@@ -2,7 +2,6 @@ package models
 
 import (
 	"encoding/json"
-	"github.com/pkg/errors"
 	"time"
 	"unlock/constants"
 )
@@ -22,7 +21,7 @@ func NewPacketServerGameStart() *PacketServerGameStart {
 func (packet *PacketServerGameStart) Send(lobby *Lobby) (err error) {
 	payload, err := json.Marshal(packet)
 	if err != nil {
-		return errors.WithStack(err)
+		return err
 	}
 
 	game, exists := lobby.CurrentGame()

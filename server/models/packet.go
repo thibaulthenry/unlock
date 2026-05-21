@@ -2,7 +2,6 @@ package models
 
 import (
 	"encoding/json"
-	"github.com/pkg/errors"
 	"unlock/constants"
 )
 
@@ -15,7 +14,7 @@ func HandlePacket(client *Client, payload []byte) (err error) {
 
 	err = json.Unmarshal(payload, &packet)
 	if err != nil {
-		return errors.WithStack(err)
+		return err
 	}
 
 	switch packet.Label {
@@ -25,7 +24,7 @@ func HandlePacket(client *Client, payload []byte) (err error) {
 
 		err = json.Unmarshal(payload, &packet)
 		if err != nil {
-			return errors.WithStack(err)
+			return err
 		}
 
 		return packet.Receive(client)
@@ -35,7 +34,7 @@ func HandlePacket(client *Client, payload []byte) (err error) {
 
 		err = json.Unmarshal(payload, &packet)
 		if err != nil {
-			return errors.WithStack(err)
+			return err
 		}
 
 		return packet.Receive(client)
@@ -45,7 +44,7 @@ func HandlePacket(client *Client, payload []byte) (err error) {
 
 		err = json.Unmarshal(payload, &packet)
 		if err != nil {
-			return errors.WithStack(err)
+			return err
 		}
 
 		return packet.Receive(client)
@@ -55,7 +54,7 @@ func HandlePacket(client *Client, payload []byte) (err error) {
 
 		err = json.Unmarshal(payload, &packet)
 		if err != nil {
-			return errors.WithStack(err)
+			return err
 		}
 
 		return packet.Receive(client)
@@ -65,7 +64,7 @@ func HandlePacket(client *Client, payload []byte) (err error) {
 
 		err = json.Unmarshal(payload, &packet)
 		if err != nil {
-			return errors.WithStack(err)
+			return err
 		}
 
 		return packet.Receive(client)

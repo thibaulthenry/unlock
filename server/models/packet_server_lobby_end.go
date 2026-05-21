@@ -2,7 +2,6 @@ package models
 
 import (
 	"encoding/json"
-	"github.com/pkg/errors"
 	"unlock/constants"
 )
 
@@ -25,7 +24,7 @@ func NewPacketServerLobbyEnd(losers map[string]*Client, winners map[string]*Clie
 func (packet *PacketServerLobbyEnd) Send(lobby *Lobby) (err error) {
 	payload, err := json.Marshal(packet)
 	if err != nil {
-		return errors.WithStack(err)
+		return err
 	}
 
 	lobby.State = constants.LobbyStateEnded

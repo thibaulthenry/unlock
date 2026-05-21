@@ -1,8 +1,8 @@
 package models
 
 import (
+	"errors"
 	"fmt"
-	"github.com/pkg/errors"
 	"unlock/constants"
 )
 

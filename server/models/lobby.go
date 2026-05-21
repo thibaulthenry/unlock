@@ -2,7 +2,6 @@ package models
 
 import (
 	"github.com/google/uuid"
-	"github.com/pkg/errors"
 	"log"
 	"math"
 	"math/rand"
@@ -53,7 +52,7 @@ func (lobby *Lobby) CurrentGame() (game *Game, exists bool) {
 }
 
 func (lobby *Lobby) deleteInFirestore() (err error) {
-	return errors.WithStack(firestore.DeleteDocument(constants.CollectionLobbies, lobby.Code))
+	return firestore.DeleteDocument(constants.CollectionLobbies, lobby.Code)
 }
 
 func (lobby *Lobby) GetLosers() (map[string]*Client, bool) {
@@ -130,7 +129,7 @@ func (lobby *Lobby) NextGame() (err error) {
 }
 
 func (lobby *Lobby) PushToFirestore() (err error) {
-	return errors.WithStack(firestore.SetDocument(constants.CollectionLobbies, lobby.Code, lobby))
+	return firestore.SetDocument(constants.CollectionLobbies, lobby.Code, lobby)
 }
 
 func (lobby *Lobby) start() {
