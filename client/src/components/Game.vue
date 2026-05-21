@@ -7,19 +7,19 @@
     >
       <v-progress-linear
           color="amber"
-          :value="percentage"
+          :model-value="percentage"
           rounded
           striped
           height="20"
       >
-        <template v-slot:default="{ value }">
+        <template #default="{ value }">
           <span
               id="countdown"
               class="countdown"
               :class="{
-                'green--text': percentage >= 50,
-                'yellow--text': percentage < 50 && percentage >= 20,
-                'red--text': percentage < 20,
+                'text-green': percentage >= 50,
+                'text-yellow': percentage < 50 && percentage >= 20,
+                'text-red': percentage < 20,
               }"
           >
             {{ Math.ceil((value * delay) / 100) }}
@@ -38,33 +38,32 @@
 </template>
 
 <script>
-import bus from '../services/event-bus'
-import EndScene from '../models/scenes/end-scene'
-import EventTypes from '../constants/event-types'
-import GameFallingApplesScene from '../models/scenes/game-falling-apples-scene'
-import GameSpaceVegetablesScene from '../models/scenes/game-space-vegetables-scene'
-import GameStarWarsScene from '../models/scenes/game-star-wars-scene'
-import LobbyScene from '../models/scenes/lobby-scene'
-import LobbyStates from '../constants/lobby-states'
+import bus from '@/services/event-bus'
+import EndScene from '@/models/scenes/end-scene'
+import EventTypes from '@/constants/event-types'
+import GameFallingApplesScene from '@/models/scenes/game-falling-apples-scene'
+import GameSpaceVegetablesScene from '@/models/scenes/game-space-vegetables-scene'
+import GameStarWarsScene from '@/models/scenes/game-star-wars-scene'
+import LobbyScene from '@/models/scenes/lobby-scene'
+import LobbyStates from '@/constants/lobby-states'
 import Phaser from 'phaser'
-import PreGameScene from '../models/scenes/pre-game-scene'
-import PreGameFallScene from '../models/scenes/pre-game-fall-scene'
-import SceneInputs from '../constants/scene-inputs'
-import SceneKeys from '../constants/scene-keys'
-import Vue from 'vue'
+import PreGameScene from '@/models/scenes/pre-game-scene'
+import PreGameFallScene from '@/models/scenes/pre-game-fall-scene'
+import SceneInputs from '@/constants/scene-inputs'
+import SceneKeys from '@/constants/scene-keys'
+import tickSound from '@/assets/sounds/tick.mp3'
+import loopSound from '@/assets/sounds/loop.mp3'
 
 export default {
-  data: () => {
-    return {
-      game: null,
-      delay: 0,
-      percentage: 100,
-      sceneKey: SceneKeys.LOBBY,
-      tick: -1,
-      tickAudio: new Audio(require('../assets/sounds/tick.mp3')),
-      loopAudio: new Audio(require('../assets/sounds/loop.mp3'))
-    }
-  },
+  data: () => ({
+    game: null,
+    delay: 0,
+    percentage: 100,
+    sceneKey: SceneKeys.LOBBY,
+    tick: -1,
+    tickAudio: new Audio(tickSound),
+    loopAudio: new Audio(loopSound),
+  }),
 
   computed: {
     footerMinimized() {
@@ -79,11 +78,10 @@ export default {
       get() {
         return this.$store.state.playMusicLoop
       },
-
       set(value) {
-        this.$store.commit('SET_PLAY_MUSIC_LOOP', {play: value})
-      }
-    }
+        this.$store.commit('SET_PLAY_MUSIC_LOOP', { play: value })
+      },
+    },
   },
 
   methods: {
@@ -92,27 +90,20 @@ export default {
         this.game.scene.stop(this.sceneKey)
         this.game.scene.remove(this.sceneKey)
         this.game.scene.add(sceneKey, this.getSceneByKey(sceneKey), true, data)
-        this.$store.commit('SET_SCENE_INPUTS', {inputs: SceneInputs[sceneKey]})
+        this.$store.commit('SET_SCENE_INPUTS', { inputs: SceneInputs[sceneKey] })
         this.sceneKey = sceneKey
       }
     },
 
     getSceneByKey(sceneKey) {
       switch (sceneKey) {
-        case SceneKeys.END:
-          return EndScene
-        case SceneKeys.GAME_FALLING_APPLES:
-          return GameFallingApplesScene
-        case SceneKeys.GAME_SPACE_VEGETABLES:
-          return GameSpaceVegetablesScene
-        case SceneKeys.GAME_STAR_WARS:
-          return GameStarWarsScene
-        case SceneKeys.LOBBY:
-          return LobbyScene
-        case SceneKeys.PRE_GAME:
-          return PreGameScene
-        case SceneKeys.PRE_GAME_FALL:
-          return PreGameFallScene
+        case SceneKeys.END: return EndScene
+        case SceneKeys.GAME_FALLING_APPLES: return GameFallingApplesScene
+        case SceneKeys.GAME_SPACE_VEGETABLES: return GameSpaceVegetablesScene
+        case SceneKeys.GAME_STAR_WARS: return GameStarWarsScene
+        case SceneKeys.LOBBY: return LobbyScene
+        case SceneKeys.PRE_GAME: return PreGameScene
+        case SceneKeys.PRE_GAME_FALL: return PreGameFallScene
       }
     },
 
@@ -123,9 +114,7 @@ export default {
         this.$store.dispatch('notifyError', this.$t('snackbar.error.lobbyInterrupted'))
       }
 
-      if (this.$route.path !== '/') {
-        this.$router.push('/')
-      }
+      if (this.$route.path !== '/') this.$router.push('/')
     },
 
     preventRightClick(event) {
@@ -139,14 +128,11 @@ export default {
       this.loopAudio.pause()
     },
 
-    tickCountdown({delay, percentage}) {
+    tickCountdown({ delay, percentage }) {
       this.delay = delay
-
       this.percentage = percentage
 
-      if (this.percentage === 0) {
-        this.tick = -1
-      }
+      if (this.percentage === 0) this.tick = -1
 
       const tick = Math.ceil((percentage * delay) / 100)
 
@@ -169,7 +155,7 @@ export default {
         this.loopAudio.volume = 0.32
         this.playMusicLoop = true
       }
-    }
+    },
   },
 
   mounted() {
@@ -190,19 +176,21 @@ export default {
         autoCenter: Phaser.Scale.CENTER_BOTH,
       },
       resizeInterval: 10,
-      antialias: true
+      antialias: true,
     })
 
     this.game.sound.pauseOnBlur = false
     this.loopAudio.loop = true
 
-    this.$store.commit('SET_SCENE_INPUTS', {inputs: SceneInputs[SceneKeys.LOBBY]})
+    this.$store.commit('SET_SCENE_INPUTS', { inputs: SceneInputs[SceneKeys.LOBBY] })
 
     this.game.scene.add(SceneKeys.LOBBY, LobbyScene, true)
-    Vue.prototype.$game = this.game
+    // L'instance Phaser est exposée globalement pour les composants
+    // qui en ont besoin (clavier virtuel, souris). Voir main.js.
+    window.$game = this.game
   },
 
-  beforeDestroy() {
+  beforeUnmount() {
     this.resetMusicLoop()
     this.$window.removeEventListener('contextmenu', this.preventRightClick)
     bus.$off(EventTypes.GAME_CHANGE_SCENE)
@@ -210,12 +198,13 @@ export default {
     bus.$off(EventTypes.LOBBY_INTERRUPT)
     bus.$off(EventTypes.TOGGLE_MUSIC_LOOP)
     this.game.destroy(true, false)
-  }
+    window.$game = null
+  },
 }
 </script>
 
 <style scoped>
-::v-deep canvas {
+:deep(canvas) {
   margin: 0 !important;
 }
 
@@ -268,11 +257,11 @@ export default {
   height: 60vh !important;
 }
 
-::v-deep .v-progress-linear {
+:deep(.v-progress-linear) {
   overflow: inherit;
 }
 
-::v-deep .v-progress-linear__determinate {
+:deep(.v-progress-linear__determinate) {
   border-radius: 4px;
 }
 </style>

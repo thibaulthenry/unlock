@@ -1,5 +1,5 @@
-import LobbyStates from '../../constants/lobby-states'
-import lodash from 'lodash'
+import LobbyStates from '@/constants/lobby-states'
+import { orderBy } from 'lodash-es'
 
 export default class Lobby {
 
@@ -32,7 +32,7 @@ export default class Lobby {
 
   getPlayers() {
     return this.clients && typeof this.clients === 'object'
-        ? lodash.orderBy(Object.values(this.clients).filter(client => !client.spectating), ['points', 'name'], ['desc', 'asc'])
+        ? orderBy(Object.values(this.clients).filter(client => !client.spectating), ['points', 'name'], ['desc', 'asc'])
         : []
   }
 

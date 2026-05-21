@@ -6,10 +6,7 @@
           max-height="45"
           :style="{'border': keysAvailable.up ? '#00C853 2px solid' : undefined}"
       >
-        <v-icon
-            dark
-            :color="keysAvailable.up ? 'green darken-1' : undefined"
-        >
+        <v-icon :color="keysAvailable.up ? 'green-darken-1' : undefined">
           mdi-arrow-up-drop-circle
         </v-icon>
       </v-btn>
@@ -21,10 +18,7 @@
           class="ml-1 mr-1"
           :style="{'border': keysAvailable.left ? '#00C853 2px solid' : undefined}"
       >
-        <v-icon
-            dark
-            :color="keysAvailable.left ? 'green darken-1' : undefined"
-        >
+        <v-icon :color="keysAvailable.left ? 'green-darken-1' : undefined">
           mdi-arrow-left-drop-circle
         </v-icon>
       </v-btn>
@@ -34,10 +28,7 @@
           class="ml-1 mr-1"
           :style="{'border': keysAvailable.down ? '#00C853 2px solid' : undefined}"
       >
-        <v-icon
-            dark
-            :color="keysAvailable.down ? 'green darken-1' : undefined"
-        >
+        <v-icon :color="keysAvailable.down ? 'green-darken-1' : undefined">
           mdi-arrow-down-drop-circle
         </v-icon>
       </v-btn>
@@ -47,10 +38,7 @@
           class="ml-1 mr-1"
           :style="{'border': keysAvailable.right ? '#00C853 2px solid' : undefined}"
       >
-        <v-icon
-            dark
-            :color="keysAvailable.right ? 'green darken-1' : undefined"
-        >
+        <v-icon :color="keysAvailable.right ? 'green-darken-1' : undefined">
           mdi-arrow-right-drop-circle
         </v-icon>
       </v-btn>
@@ -59,14 +47,11 @@
     <v-row class="ma-0 mt-n2 ml-1 mr-1 d-flex justify-center align-center">
       <v-btn
           ref="keySpace"
-          class="ml-1 mr-1 "
+          class="ml-1 mr-1"
           block
           :style="{'border': keysAvailable.space ? '#00C853 2px solid' : undefined}"
       >
-        <v-icon
-            dark
-            :color="keysAvailable.space ? 'green darken-1' : undefined"
-        >
+        <v-icon :color="keysAvailable.space ? 'green-darken-1' : undefined">
           mdi-keyboard-space
         </v-icon>
       </v-btn>
@@ -75,30 +60,23 @@
 </template>
 
 <script>
-import Keys from '../constants/keys'
-import InputTypes from '../constants/input-types'
+import Keys from '@/constants/keys'
+import InputTypes from '@/constants/input-types'
 
 export default {
-  data: () => {
-    return {
-      keysPressed: {}
-    }
-  },
+  data: () => ({
+    keysPressed: {},
+  }),
 
   computed: {
     keysAvailable() {
       return this.$store.state.sceneInputs.keyboard
-    }
+    },
   },
 
   methods: {
-    keyDown(event) {
-      this.move(event, InputTypes.PRESS)
-    },
-
-    keyUp(event) {
-      this.move(event, InputTypes.RELEASE)
-    },
+    keyDown(event) { this.move(event, InputTypes.PRESS) },
+    keyUp(event) { this.move(event, InputTypes.RELEASE) },
 
     move(event, type) {
       switch (event.code) {
@@ -126,11 +104,8 @@ export default {
 
     simulateMouseEvent(element, type, direction) {
       if (type === InputTypes.PRESS) {
-        if (this.keysPressed[direction]) {
-          return
-        } else {
-          this.keysPressed[direction] = true
-        }
+        if (this.keysPressed[direction]) return
+        this.keysPressed[direction] = true
       } else if (type === InputTypes.RELEASE) {
         delete this.keysPressed[direction]
       }
@@ -140,7 +115,7 @@ export default {
       event.clientX = offset.left + offset.width / 2
       event.clientY = offset.top + offset.height / 2
       element.dispatchEvent(event)
-    }
+    },
   },
 
   mounted() {
@@ -148,13 +123,12 @@ export default {
     this.$window.addEventListener('keyup', this.keyUp)
   },
 
-  beforeDestroy() {
+  beforeUnmount() {
     this.$window.removeEventListener('keydown', this.keyDown)
     this.$window.removeEventListener('keyup', this.keyUp)
-  }
+  },
 }
 </script>
 
 <style scoped>
-
 </style>

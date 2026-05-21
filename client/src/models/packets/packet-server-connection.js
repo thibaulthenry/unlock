@@ -1,4 +1,4 @@
-import PacketLabels from '../../constants/packet-labels'
+import PacketLabels from '@/constants/packet-labels'
 
 export default class PacketServerConnection {
 
@@ -9,8 +9,8 @@ export default class PacketServerConnection {
   }
 
   receive(store) {
-    store.commit('SET_CLIENT', {client: this.client})
-    store.commit('SET_LOBBY_CODE', {lobbyCode: this.lobbyCode})
+    store.setClient({ client: this.client })
+    store.setLobbyCode({ lobbyCode: this.lobbyCode })
   }
 
 }

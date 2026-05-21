@@ -11,34 +11,35 @@
 
     <v-col v-if="!(connected && lobby && lobby.code)" class="d-flex align-center flex-column">
       <v-progress-linear
-          color="deep-purple accent-4"
+          color="deep-purple-accent-4"
           indeterminate
           rounded
           height="6"
       />
 
-      <span class="white--text text-overline">Connecting..</span>
+      <span class="text-white text-overline">Connecting..</span>
     </v-col>
   </v-row>
 </template>
 
 <script>
-import i18n from '../../services/i18n'
-import Game from '../../components/Game'
-import Lobby from '../../models/data/lobby'
-import PacketClientConnection from '../../models/packets/packet-client-connection'
-import store from '../../services/store'
+import { doc, getDoc, onSnapshot } from 'firebase/firestore'
+import i18n from '@/services/i18n'
+import Game from '@/components/Game.vue'
+import Lobby from '@/models/data/lobby'
+import PacketClientConnection from '@/models/packets/packet-client-connection'
+import store from '@/services/store'
+import { firestore } from '@/services/firebase'
+import { useMainStore } from '@/stores/main'
 
 export default {
-  components: {Game},
+  components: { Game },
 
-  data: () => {
-    return {
-      connected: false,
-      connectionTask: null,
-      connectionTimeout: null,
-    }
-  },
+  data: () => ({
+    connected: false,
+    connectionTask: null,
+    connectionTimeout: null,
+  }),
 
   computed: {
     lobby() {
@@ -47,9 +48,9 @@ export default {
   },
 
   watch: {
-    '$store.state.webSocket': function (value) {
+    '$store.state.webSocket'(value) {
       if (!value && this.$route.path !== '/') {
-        store.dispatch('notifyError',  this.$t('snackbar.error.connectionLost'))
+        store.dispatch('notifyError', this.$t('snackbar.error.connectionLost'))
         this.$router.push('/')
       }
     },
@@ -57,29 +58,31 @@ export default {
 
   methods: {
     interruptConnection(errorMessage) {
-      if (this.connectionTask) {
-        clearInterval(this.connectionTask)
-      }
-
-      if (this.connectionTimeout) {
-        clearTimeout(this.connectionTimeout)
-      }
+      if (this.connectionTask) clearInterval(this.connectionTask)
+      if (this.connectionTimeout) clearTimeout(this.connectionTimeout)
 
       if (errorMessage) {
         this.$store.dispatch('notifyError', this.$t(errorMessage))
-
-        if (this.$route.path !== '/') {
-          this.$router.push('/')
-        }
+        if (this.$route.path !== '/') this.$router.push('/')
       }
-    }
+    },
+
+    bindLobby(code) {
+      const main = useMainStore()
+      this.unsubscribeLobby = onSnapshot(
+        doc(firestore, 'lobbies', code),
+        (snapshot) => {
+          if (snapshot.exists()) main.applyLobbySnapshot(snapshot.data())
+        },
+      )
+    },
   },
 
   async beforeRouteEnter(to, from, next) {
-    let paramLobbyCode = to.params.code
+    const paramLobbyCode = to.params.code
 
     if (!paramLobbyCode || typeof paramLobbyCode !== 'string') {
-      await store.dispatch('notifyInfo', i18n.t('snackbar.error.lobbyCodeMissing'))
+      await store.dispatch('notifyInfo', i18n.global.t('snackbar.error.lobbyCodeMissing'))
       next('/')
       return
     }
@@ -88,7 +91,7 @@ export default {
 
     if (lobbyCode.length > 300) {
       lobbyCode = lobbyCode.substr(0, 300)
-      await store.dispatch('notifyInfo', i18n.t('snackbar.info.lobbyCodeOverflow'))
+      await store.dispatch('notifyInfo', i18n.global.t('snackbar.info.lobbyCodeOverflow'))
     }
 
     if (paramLobbyCode !== lobbyCode) {
@@ -97,86 +100,87 @@ export default {
     }
 
     try {
-      let startConnectionProcess = await store.dispatch('connect', lobbyCode)
+      const startConnectionProcess = await store.dispatch('connect', lobbyCode)
 
       if (typeof startConnectionProcess === 'boolean' && startConnectionProcess) {
-        await store.dispatch('sendPacket', new PacketClientConnection(store.state.client?.name, store.state.lobby?.capacity, lobbyCode, store.state.lobby?.pointsGoal))
+        await store.dispatch(
+          'sendPacket',
+          new PacketClientConnection(
+            store.state.client?.name,
+            store.state.lobby?.capacity,
+            lobbyCode,
+            store.state.lobby?.pointsGoal,
+          ),
+        )
       }
 
-      store.commit('SET_DRAWER', {drawer: false})
+      store.commit('SET_DRAWER', { drawer: false })
       next()
     } catch (ignored) {
-      await store.dispatch('notifyError', i18n.t('snackbar.error.connectionServerUnreachable'))
+      await store.dispatch('notifyError', i18n.global.t('snackbar.error.connectionServerUnreachable'))
       next('/')
     }
   },
 
   created() {
-    if (this.$vuetify.breakpoint.mobile) {
-      return
-    }
+    if (this.$vuetify.display.mobile) return
 
     this.unwatchConnectedState = this.$watch('connected', (value) => {
       if (value) {
-        this.$store.commit('SET_DRAWER', {drawer: true})
+        this.$store.commit('SET_DRAWER', { drawer: true })
         this.unwatchConnectedState()
       }
     })
   },
 
   mounted() {
-    this.$store.commit('SET_FOOTER_MINIMIZED', {footerMinimized: false})
+    this.$store.commit('SET_FOOTER_MINIMIZED', { footerMinimized: false })
 
     this.connectionTask = setInterval(() => {
-      if (!this.$store.state.lobby?.code) {
-        return
-      }
+      if (!this.$store.state.lobby?.code) return
 
       if (this.connected) {
         this.interruptConnection()
         return
       }
 
-      this.$fire.doc(`/lobbies/${this.$store.state.lobby.code}`).get()
-          .then(snapshot => {
-            if (!snapshot.exists) {
-              this.interruptConnection('snackbar.error.lobbyUnknown')
-              return
-            }
+      getDoc(doc(firestore, 'lobbies', this.$store.state.lobby.code))
+        .then(snapshot => {
+          if (!snapshot.exists()) {
+            this.interruptConnection('snackbar.error.lobbyUnknown')
+            return
+          }
 
-            const lobby = new Lobby(snapshot.data())
+          const lobby = new Lobby(snapshot.data())
 
-            this.connected = lobby.isClientPlaying(this.$store.state.client?.uuid)
+          this.connected = lobby.isClientPlaying(this.$store.state.client?.uuid)
 
-            if (this.connected) {
-              this.$store.dispatch('bindLobby')
-              return
-            }
+          if (this.connected) {
+            this.bindLobby(this.$store.state.lobby.code)
+            return
+          }
 
-            if (lobby.isFull()) {
-              this.interruptConnection('snackbar.error.lobbyFull')
-              return
-            }
+          if (lobby.isFull()) {
+            this.interruptConnection('snackbar.error.lobbyFull')
+            return
+          }
 
-            if (lobby.state > 1) {
-              this.interruptConnection('snackbar.error.lobbyAlreadyStarted')
-            }
-          })
+          if (lobby.state > 1) {
+            this.interruptConnection('snackbar.error.lobbyAlreadyStarted')
+          }
+        })
     }, 500)
 
     this.connectionTimeout = setTimeout(() => {
       clearInterval(this.connectionTask)
-
-      if (!this.connected) {
-        this.interruptConnection('snackbar.error.connectionFailed')
-      }
+      if (!this.connected) this.interruptConnection('snackbar.error.connectionFailed')
     }, 5000)
   },
 
-  beforeDestroy() {
-    this.$store.dispatch('unbindLobby')
-    this.$store.commit('SET_DRAWER', {drawer: false})
-    this.$store.commit('SET_GAME', {game: {}})
+  beforeUnmount() {
+    if (this.unsubscribeLobby) this.unsubscribeLobby()
+    this.$store.commit('SET_DRAWER', { drawer: false })
+    this.$store.commit('SET_GAME', { game: {} })
     if (this.unwatchConnectedState) this.unwatchConnectedState()
 
     if (this.$store.state.webSocket) {
@@ -193,7 +197,7 @@ export default {
   transition-timing-function: ease;
 }
 
-.fade-enter, .fade-leave-active {
+.fade-enter-from, .fade-leave-to {
   opacity: 0
 }
 </style>

@@ -1,46 +1,41 @@
 <template>
   <v-footer
-      color="grey darken-2"
+      color="grey-darken-2"
       :height="minimized ? '62px' : '200px'"
   >
-    <v-row
-        no-gutters
-        class="pa-2"
-    >
+    <v-row no-gutters class="pa-2">
       <Mouse
-          v-if="!$vuetify.breakpoint.mobile"
+          v-if="!$vuetify.display.mobile"
           style="width: 220px; opacity: 1; transition: opacity 1s"
-            :class="minimized ? 'inputs-hidden' : undefined"
-        />
+          :class="minimized ? 'inputs-hidden' : undefined"
+      />
 
-        <v-spacer/>
+      <v-spacer/>
 
-        <Display/>
+      <Display/>
 
-        <v-spacer/>
+      <v-spacer/>
 
-        <Keyboard
-            v-if="!$vuetify.breakpoint.mobile"
-            style="width: 220px; opacity: 1; transition: opacity 1s"
-            :class="minimized ? 'inputs-hidden' : undefined"
-        />
-      </v-row>
-    </v-footer>
+      <Keyboard
+          v-if="!$vuetify.display.mobile"
+          style="width: 220px; opacity: 1; transition: opacity 1s"
+          :class="minimized ? 'inputs-hidden' : undefined"
+      />
+    </v-row>
+  </v-footer>
 </template>
 
 <script>
-import Keyboard from '../Keyboard'
-import Mouse from '../Mouse'
-import Display from '../Display'
+import Keyboard from '@/components/Keyboard.vue'
+import Mouse from '@/components/Mouse.vue'
+import Display from '@/components/Display.vue'
 
 export default {
-  components: {Display, Keyboard, Mouse},
+  components: { Display, Keyboard, Mouse },
 
   computed: {
-    minimized() {
-      return this.$store.state.footerMinimized
-    }
-  }
+    minimized() { return this.$store.state.footerMinimized },
+  },
 }
 </script>
 

@@ -1,6 +1,6 @@
-import bus from '../../services/event-bus'
-import EventTypes from '../../constants/event-types'
-import PacketLabels from '../../constants/packet-labels'
+import bus from '@/services/event-bus'
+import EventTypes from '@/constants/event-types'
+import PacketLabels from '@/constants/packet-labels'
 
 export default class PacketServerLobbyInterrupt {
 

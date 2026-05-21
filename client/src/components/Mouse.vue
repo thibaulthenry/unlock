@@ -10,20 +10,21 @@
           min-width="40px"
           :style="{'border': keysAvailable.leftClick ? '#00C853 2px solid' : undefined}"
       >
-        <v-icon
-            dark
-            :color="keysAvailable.leftClick ? 'green darken-1' : undefined"
-        >
-          {{ $i18n.locale === 'fr' ? 'mdi-alpha-g-circle-outline' : 'mdi-alpha-l-circle-outline'}}
+        <v-icon :color="keysAvailable.leftClick ? 'green-darken-1' : undefined">
+          {{ $i18n.locale === 'fr' ? 'mdi-alpha-g-circle-outline' : 'mdi-alpha-l-circle-outline' }}
         </v-icon>
       </v-btn>
 
       <v-btn
           ref="mouseMiddle"
           class="rounded-xl mt-5 elevation-5"
-          style="z-index: 1; position: absolute; transform:rotate(90deg);"
-          x-small
-          :style="{'border': keysAvailable.middleClick ? '#00C853 2px solid' : 'black 2px solid'}"
+          size="x-small"
+          :style="{
+            'z-index': 1,
+            position: 'absolute',
+            transform: 'rotate(90deg)',
+            'border': keysAvailable.middleClick ? '#00C853 2px solid' : 'black 2px solid'
+          }"
       />
 
       <v-btn
@@ -35,11 +36,8 @@
           min-width="40px"
           :style="{'border': keysAvailable.rightClick ? '#00C853 2px solid' : undefined}"
       >
-        <v-icon
-            dark
-            :color="keysAvailable.rightClick ? 'green darken-1' : undefined"
-        >
-          {{ $i18n.locale === 'fr' ? 'mdi-alpha-d-circle-outline' : 'mdi-alpha-r-circle-outline'}}
+        <v-icon :color="keysAvailable.rightClick ? 'green-darken-1' : undefined">
+          {{ $i18n.locale === 'fr' ? 'mdi-alpha-d-circle-outline' : 'mdi-alpha-r-circle-outline' }}
         </v-icon>
       </v-btn>
     </v-row>
@@ -50,11 +48,10 @@
           style="background-color: #f5f5f5; width: 87px;"
           :style="{'border': keysAvailable.slide ? '#00C853 2px solid' : undefined}"
       >
-        <v-icon :color="keysAvailable.slide ? 'green darken-1' : 'black'">
+        <v-icon :color="keysAvailable.slide ? 'green-darken-1' : 'black'">
           mdi-arrow-left-drop-circle
         </v-icon>
-
-        <v-icon :color="keysAvailable.slide ? 'green darken-1' : 'black'">
+        <v-icon :color="keysAvailable.slide ? 'green-darken-1' : 'black'">
           mdi-arrow-right-drop-circle
         </v-icon>
       </div>
@@ -63,23 +60,21 @@
 </template>
 
 <script>
-import bus from '../services/event-bus'
-import EventTypes from '../constants/event-types'
-import Keys from '../constants/keys'
-import InputTypes from '../constants/input-types'
+import bus from '@/services/event-bus'
+import EventTypes from '@/constants/event-types'
+import Keys from '@/constants/keys'
+import InputTypes from '@/constants/input-types'
 
 export default {
-  data: () => {
-    return {
-      keysPressed: {},
-      listening: false
-    }
-  },
+  data: () => ({
+    keysPressed: {},
+    listening: false,
+  }),
 
   computed: {
     keysAvailable() {
       return this.$store.state.sceneInputs.mouse
-    }
+    },
   },
 
   methods: {
@@ -94,35 +89,19 @@ export default {
       }
     },
 
-    mouseDown(event) {
-      this.move(event, InputTypes.PRESS)
-    },
-
-    mouseUp(event) {
-      this.move(event, InputTypes.RELEASE)
-    },
+    mouseDown(event) { this.move(event, InputTypes.PRESS) },
+    mouseUp(event) { this.move(event, InputTypes.RELEASE) },
 
     move(event, type) {
       let el, key
 
       switch (event.button) {
-        case 0:
-          el = this.$refs.mouseLeft.$el
-          key = Keys.mouse.LEFT
-          break
-        case 1:
-          el = this.$refs.mouseMiddle.$el
-          key = Keys.mouse.MIDDLE
-          break
-        case 2:
-          el = this.$refs.mouseRight.$el
-          key = Keys.mouse.RIGHT
-          break
+        case 0: el = this.$refs.mouseLeft.$el; key = Keys.mouse.LEFT; break
+        case 1: el = this.$refs.mouseMiddle.$el; key = Keys.mouse.MIDDLE; break
+        case 2: el = this.$refs.mouseRight.$el; key = Keys.mouse.RIGHT; break
       }
 
-      if (!el || !key) {
-        return
-      }
+      if (!el || !key) return
 
       const x = event.clientX
       const y = event.clientY
@@ -137,11 +116,8 @@ export default {
 
     simulateMouseEvent(element, type, direction) {
       if (type === InputTypes.PRESS) {
-        if (this.keysPressed[direction]) {
-          return
-        } else {
-          this.keysPressed[direction] = true
-        }
+        if (this.keysPressed[direction]) return
+        this.keysPressed[direction] = true
       } else if (type === InputTypes.RELEASE) {
         delete this.keysPressed[direction]
       }
@@ -151,7 +127,7 @@ export default {
       event.clientX = offset.left + offset.width / 2
       event.clientY = offset.top + offset.height / 2
       element.dispatchEvent(event)
-    }
+    },
   },
 
   mounted() {
@@ -159,19 +135,17 @@ export default {
     bus.$on(EventTypes.LISTEN_MOUSE_EVENTS, this.addListeners)
   },
 
-  beforeDestroy() {
+  beforeUnmount() {
     bus.$off(EventTypes.LISTEN_MOUSE_EVENTS, this.addListeners)
 
     const container = this.$document.querySelector('#game-container')
-
     if (container) {
       container.removeEventListener(InputTypes.PRESS, this.mouseDown)
       container.removeEventListener(InputTypes.RELEASE, this.mouseUp)
     }
-  }
+  },
 }
 </script>
 
 <style scoped>
-
 </style>

@@ -1,8 +1,8 @@
-import bus from '../../services/event-bus'
-import EventTypes from '../../constants/event-types'
-import PacketLabels from '../../constants/packet-labels'
-import SceneKeys from '../../constants/scene-keys'
-import store from '../../services/store'
+import bus from '@/services/event-bus'
+import EventTypes from '@/constants/event-types'
+import PacketLabels from '@/constants/packet-labels'
+import SceneKeys from '@/constants/scene-keys'
+import { useMainStore } from '@/stores/main'
 
 export default class PacketServerGameWait {
 
@@ -15,23 +15,24 @@ export default class PacketServerGameWait {
   }
 
   receive() {
+    const store = useMainStore()
+
     bus.$emit(
-        EventTypes.GAME_CHANGE_SCENE,
-        {
-          key: !this.internal && this.previousWinners[store.state.client?.uuid] ? SceneKeys.PRE_GAME_FALL : SceneKeys.PRE_GAME,
-          data: {
-            points: this.points,
-            previousWinners: this.previousWinners
-          }
-        },
+      EventTypes.GAME_CHANGE_SCENE,
+      {
+        key: !this.internal && this.previousWinners[store.client?.uuid] ? SceneKeys.PRE_GAME_FALL : SceneKeys.PRE_GAME,
+        data: {
+          points: this.points,
+          previousWinners: this.previousWinners
+        }
+      },
     )
 
     if (this.initialisation) {
       bus.$emit(EventTypes.TOGGLE_MUSIC_LOOP, true)
     }
 
-    store.commit('SET_PREVIOUS_WINNERS', {winners: this.previousWinners})
+    store.setPreviousWinners({ winners: this.previousWinners })
   }
 
 }
-

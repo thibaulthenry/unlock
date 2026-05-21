@@ -1,5 +1,5 @@
 <template>
-  <v-container fluid fill-height class="pa-0">
+  <v-container fluid class="fill-height pa-0">
     <v-row class="d-flex justify-center">
       <v-col cols="12" sm="8" md="6" lg="4" xl="3">
         <v-form ref="form" v-model="validForm" @submit.prevent="">
@@ -23,9 +23,8 @@
               <v-btn
                   :loading="loadingJoin"
                   :color="'#BB8600'"
-                  small
+                  size="small"
                   block
-                  dark
                   type="submit"
                   @click="join"
                   @submit="join"
@@ -33,19 +32,6 @@
                 {{ $t('buttons.lobby.join') }}
               </v-btn>
             </v-col>
-
-            <!-- <v-col cols="12" md="5">-->
-            <!--   <v-btn-->
-            <!--       :loading="loadingSpectate"-->
-            <!--       :color="'#BB8600'"-->
-            <!--       block-->
-            <!--       dark-->
-            <!--       disabled-->
-            <!--       @click="spectate"-->
-            <!--   >-->
-            <!--     {{ $t('buttons.lobby.spectate') }}-->
-            <!--   </v-btn>-->
-            <!-- </v-col>-->
           </v-row>
 
           <v-row class="d-flex justify-center mt-5">
@@ -58,9 +44,9 @@
                   :counter="(lobbyCode && lobbyCode.length > 200) ? 300 : undefined"
                   maxlength="300"
                   clearable
-                  outlined
+                  variant="outlined"
                   rounded
-                  dark
+                  theme="dark"
               />
             </v-col>
           </v-row>
@@ -71,11 +57,13 @@
 </template>
 
 <script>
+import { doc, getDoc } from 'firebase/firestore'
 import Lobby from '../models/data/lobby'
+import { firestore } from '@/services/firebase'
 
 export default {
   data() {
-    const bucket = process.env.VUE_APP_FIREBASE_STORAGE_BUCKET || 'unlock-db.appspot.com'
+    const bucket = import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || 'unlock-db.appspot.com'
     const carouselUrl = name => `https://firebasestorage.googleapis.com/v0/b/${bucket}/o/games%2F${name}.png?alt=media`
     return {
       items: [
@@ -91,8 +79,8 @@ export default {
   },
 
   methods: {
-    join() {
-      this.$refs.form.validate()
+    async join() {
+      await this.$refs.form.validate()
 
       if (!this.validForm) {
         return
@@ -100,19 +88,19 @@ export default {
 
       this.loadingJoin = true
 
-      const lobbyReference = this.$fire.doc(`/lobbies/${this.lobbyCode}`)
+      try {
+        const snapshot = await getDoc(doc(firestore, 'lobbies', this.lobbyCode))
+        if (snapshot.exists() && new Lobby(snapshot.data()).isFull()) {
+          this.$store.dispatch('notifyError', this.$t('snackbar.error.lobbyFull'))
+          return
+        }
 
-      lobbyReference.get()
-          .then(snapshot => {
-            if (snapshot.exists && new Lobby(snapshot.data()).isFull()) {
-              this.$store.dispatch('notifyError', this.$t('snackbar.error.lobbyFull'))
-              return
-            }
-
-            this.$router.push(`lobbies/${this.lobbyCode}`)
-          })
-          .catch(() => this.$store.dispatch('notifyError', this.$t('snackbar.error.connectionLost')))
-          .finally(() => this.loadingJoin = false)
+        this.$router.push(`lobbies/${this.lobbyCode}`)
+      } catch (e) {
+        this.$store.dispatch('notifyError', this.$t('snackbar.error.connectionLost'))
+      } finally {
+        this.loadingJoin = false
+      }
     }
   },
 
