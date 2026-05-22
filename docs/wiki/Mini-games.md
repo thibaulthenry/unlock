@@ -1,6 +1,6 @@
 # Mini-jeux
 
-Quatre mini-jeux sont disponibles. Le serveur tire le suivant au hasard,
+Cinq mini-jeux sont disponibles. Le serveur tire le suivant au hasard,
 en évitant de relancer immédiatement le même que la manche précédente.
 
 Chaque manche dure environ **30 secondes** (`duration` dans
@@ -68,6 +68,78 @@ automatiquement un `CLIENT_SCENE_FLOATING_ISLANDS_FALL` pour l'éliminer
 - `RemainingPlayers` / `Losers` (set de UUIDs)
 - `RemainingPlayersCount` (pour détecter le dernier survivant)
 
+## Bombe humaine (`GameHotPotato`)
+
+![Bombe humaine](../screenshots/04-game-hot-potato.png)
+
+> Refilez la bombe ! Touchez un autre joueur pour vous en débarrasser
+> avant qu'elle n'explose.
+
+### Règles
+
+Au début de la manche, le serveur tire au sort un porteur initial. Une
+bombe (cercle rouge avec mèche) apparaît au-dessus de sa tête, avec un
+**compte à rebours visible**. Le porteur doit toucher un autre axolotl
+pour lui transférer la bombe ; un **cooldown de 1 s** empêche les
+allers-retours instantanés. À t=0, le porteur final **explose** : tous
+les autres joueurs gagnent la manche.
+
+### Carte
+
+Une arène de 1200×600 px à **4 niveaux** :
+
+- Sol (large, full width)
+- Plateforme intermédiaire gauche
+- Plateforme intermédiaire droite
+- Plateforme du haut
+
+Et **deux paires de tuyaux** qui téléportent d'un étage à l'autre :
+
+- Paire A (verte) : tuyau A1 (haut, à gauche) ↔ A2 (mid-droite)
+- Paire B (orange) : tuyau B1 (haut, à droite) ↔ B2 (mid-gauche)
+
+Effleurer un tuyau téléporte instantanément le joueur à l'autre
+extrémité de la paire (cooldown 600 ms pour éviter les boucles). Idéal
+pour feinter un poursuivant.
+
+### Contrôles
+
+- ← → : déplacement.
+- Espace : saut.
+- Contact avec un tuyau : téléportation.
+
+### Côté serveur
+
+- Game type : Solo
+- WinnersNumber : **dynamique** = `len(lobby.Clients) - 1` (surchargé
+  dans `Game.HandleGameData` au démarrage de la manche, parce que le
+  champ Firestore est statique). Tout le monde sauf le porteur final
+  gagne.
+- WinReward : 1 clé
+- Duration : 25 000 ms
+
+État serveur dans `server/models/data_scene_hot_potato.go` :
+- `HolderUuid` : UUID du porteur courant
+- `LastTransferAt` (ms epoch) + `CooldownMillis` (1000) pour l'anti
+  ping-pong côté serveur
+
+### Packets
+
+- `CLIENT_SCENE_HOT_POTATO_TAG` : émis par le client porteur quand il
+  détecte une collision (proximité < 60 px) avec un autre axolotl. Le
+  serveur valide (porteur effectif + cooldown OK) et diffuse le nouveau
+  `HolderUuid` via `SERVER_SCENE_DATA`.
+
+### Détails d'implémentation
+
+- L'envoi initial du `SERVER_SCENE_DATA` est différé de **400 ms**
+  après `HandleGameData` pour laisser le client basculer sur la scène
+  `GameHotPotato` (sinon la scène `PreGame` encore active ignorerait
+  le packet).
+- Les positions de spawn sont **déterministes** (hash de l'UUID modulo
+  une liste de 10 positions) pour éviter que tous les axolotls
+  apparaissent superposés en début de manche.
+
 ## Légumes de l'espace (`GameSpaceVegetables`)
 
 ![Légumes de l'espace](../screenshots/04-game-space-vegetables.png)
@@ -129,6 +201,7 @@ Le code de chaque scène est dans `client/src/models/scenes/` :
 
 - `game-falling-apples-scene.js`
 - `game-floating-islands-scene.js`
+- `game-hot-potato-scene.js`
 - `game-space-vegetables-scene.js`
 - `game-star-wars-scene.js`
 
@@ -136,6 +209,8 @@ Logique métier serveur :
 - `server/models/data_scene_star_wars.go` — StarWars (positions des étoiles)
 - `server/models/data_scene_floating_islands.go` — Floating Islands
   (îles, joueurs restants, étages, focus)
+- `server/models/data_scene_hot_potato.go` — Hot Potato (porteur,
+  cooldown de transfert)
 
 Les deux autres mini-jeux (FallingApples, SpaceVegetables) sont gérés
 côté client avec validation par `CLIENT_WIN`.

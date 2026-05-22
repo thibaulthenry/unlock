@@ -6,6 +6,7 @@ const (
 	PacketClientLobbyStart                  = "CLIENT_LOBBY_START"
 	PacketClientSceneFloatingIslandsCollide = "CLIENT_SCENE_FLOATING_ISLANDS_COLLIDE"
 	PacketClientSceneFloatingIslandsFall    = "CLIENT_SCENE_FLOATING_ISLANDS_FALL"
+	PacketClientSceneHotPotatoTag           = "CLIENT_SCENE_HOT_POTATO_TAG"
 	PacketClientSceneMovement               = "CLIENT_SCENE_MOVEMENT"
 	PacketClientSceneStarWarsCollect        = "CLIENT_SCENE_STAR_WARS_COLLECT"
 	PacketClientWin                         = "CLIENT_WIN"

@@ -25,6 +25,7 @@ const messages = {
       names: {
         GameFallingApples: 'Falling Apples',
         GameFloatingIslands: 'Floating Islands',
+        GameHotPotato: 'Hot Potato',
         GameSpaceVegetables: 'Space Vegetables',
         GameStarWars: 'Star Wars',
       },
@@ -38,6 +39,7 @@ const messages = {
         game: {
           GameFallingApples: 'Collect 7 apples before other players',
           GameFloatingIslands: 'Stay alive by jumping between floating islands',
+          GameHotPotato: 'Pass the bomb! Touch a player to get rid of it before it explodes',
           GameSpaceVegetables: 'Shoot the central vegetable',
           GameStarWars: 'Collect 6 stars before other players',
         },
@@ -112,6 +114,7 @@ const messages = {
       names: {
         GameFallingApples: 'Chute de pommes',
         GameFloatingIslands: 'Îles flottantes',
+        GameHotPotato: 'Bombe humaine',
         GameSpaceVegetables: 'Légumes de l\'espace',
         GameStarWars: 'Guerre des étoiles',
       },
@@ -125,6 +128,7 @@ const messages = {
         game: {
           GameFallingApples: 'Récoltez 7 pommes avant les autres joueurs',
           GameFloatingIslands: 'Restez en vie en sautant entre les îles flottantes',
+          GameHotPotato: 'Refilez la bombe ! Touchez un autre joueur pour vous en débarrasser avant qu\'elle n\'explose',
           GameSpaceVegetables: 'Tirez pour éliminer le légume central',
           GameStarWars: 'Récoltez 6 étoiles avant les autres joueurs',
         },

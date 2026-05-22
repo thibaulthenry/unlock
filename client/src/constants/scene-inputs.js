@@ -44,6 +44,21 @@ export default {
             slide: false
         }
     },
+    'GameHotPotato': {
+        keyboard: {
+            down: false,
+            left: true,
+            right: true,
+            space: true,
+            up: false
+        },
+        mouse: {
+            leftClick: false,
+            middleClick: false,
+            rightClick: false,
+            slide: false
+        }
+    },
     'GameFloatingIslandsLost': {
         keyboard: {
             down: true,

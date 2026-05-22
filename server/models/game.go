@@ -75,6 +75,47 @@ func (game *Game) HandleGameData(lobby *Lobby) (err error) {
 
 		game.AddTimeoutUuid(timeoutUuid)
 
+	case constants.SceneKeyGameHotPotato:
+		data := NewDataSceneHotPotato(lobby)
+		game.Data = data
+
+		// Tout le monde sauf le porteur final est gagnant.
+		game.WinnersNumber = len(lobby.Clients) - 1
+		if game.WinnersNumber < 1 {
+			game.WinnersNumber = 1
+		}
+
+		// Diffuse l'état initial (porteur) après un court délai pour
+		// laisser les clients basculer sur la scène GameHotPotato : le
+		// SERVER_GAME_START est broadcast juste après ce HandleGameData,
+		// donc envoyer SCENE_DATA immédiatement risque d'être reçu par
+		// la scène PreGame qui l'ignorerait.
+		initUuid := lobby.Timeout(400, func() (err error) {
+			return NewPacketServerSceneData(data, constants.SceneKeyGameHotPotato).Send(lobby)
+		})
+		game.AddTimeoutUuid(initUuid)
+
+		// À la fin du chrono, le porteur explose : tous les autres
+		// joueurs sont déclarés vainqueurs via PacketClientWin.
+		timeoutUuid := lobby.Timeout(game.Duration, func() (err error) {
+			if game.State != constants.GameStateStarted {
+				return nil
+			}
+
+			for uuid, c := range lobby.Clients {
+				if uuid == data.HolderUuid {
+					continue
+				}
+				win := &PacketClientWin{}
+				if e := win.Receive(c); e != nil {
+					err = e
+				}
+			}
+			return err
+		})
+
+		game.AddTimeoutUuid(timeoutUuid)
+
 	case constants.SceneKeyGameStarWars:
 		data := NewDataStarWarsScene()
 		game.Data = data

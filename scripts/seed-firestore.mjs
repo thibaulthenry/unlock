@@ -36,6 +36,16 @@ const games = {
     winnersNumber: 1,
     winReward: 1,
   },
+  GameHotPotato: {
+    sceneKey: 'GameHotPotato',
+    duration: 25000,
+    type: 0,             // Solo
+    winCondition: 1,     // Timeout (tous gagnent sauf le porteur final)
+    // winnersNumber est surchargé dynamiquement par game.HandleGameData
+    // au démarrage de la manche (= nbClients - 1).
+    winnersNumber: 1,
+    winReward: 1,
+  },
   GameSpaceVegetables: {
     sceneKey: 'GameSpaceVegetables',
     duration: 30000,

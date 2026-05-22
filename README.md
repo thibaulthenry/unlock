@@ -1,7 +1,7 @@
 # Unlock
 
 > Jeu multijoueur en temps réel inspiré du party game. Jusqu'à 10 joueurs
-> s'affrontent dans une suite de **quatre mini-jeux** ; le premier qui atteint
+> s'affrontent dans une suite de **cinq mini-jeux** ; le premier qui atteint
 > le nombre de clés requis (`pointsGoal`) gagne la partie et s'échappe du donjon.
 
 ![Page d'accueil](docs/screenshots/01-home.png)
@@ -12,6 +12,7 @@
 - [Les mini-jeux](#les-mini-jeux)
   - [Chute de pommes (Falling Apples)](#chute-de-pommes-falling-apples)
   - [Îles flottantes (Floating Islands)](#îles-flottantes-floating-islands)
+  - [Bombe humaine (Hot Potato)](#bombe-humaine-hot-potato)
   - [Légumes de l'espace (Space Vegetables)](#légumes-de-lespace-space-vegetables)
   - [Guerre des étoiles (Star Wars)](#guerre-des-étoiles-star-wars)
 - [Déroulement d'une partie](#déroulement-dune-partie)
@@ -49,8 +50,8 @@ sur les axolotls.
 
 ## Les mini-jeux
 
-Chaque mini-jeu dure environ 30 secondes. Le serveur tire le suivant au
-hasard parmi les quatre disponibles, en évitant de relancer deux fois de
+Chaque mini-jeu dure environ 25-30 secondes. Le serveur tire le suivant au
+hasard parmi les cinq disponibles, en évitant de relancer deux fois de
 suite le même.
 
 ### Chute de pommes (Falling Apples)
@@ -83,6 +84,29 @@ en île. Le dernier survivant gagne la manche.
   joueur **change d'onglet pendant la partie**, son axolotl tombe
   automatiquement (le serveur surveille le focus via le packet
   `CLIENT_FOCUS`).
+
+### Bombe humaine (Hot Potato)
+
+![Bombe humaine](docs/screenshots/04-game-hot-potato.png)
+
+> **Objectif** : refilez la bombe à un autre joueur avant qu'elle n'explose.
+
+Au départ de la manche, **un joueur tiré au sort** se voit affublé d'une
+bombe au-dessus de la tête (cercle rouge avec une mèche allumée). Le
+porteur a 25 secondes pour s'en débarrasser en **touchant un autre
+joueur** : la bombe change instantanément de mains (cooldown 1 s pour
+éviter le ping-pong). À l'expiration du chrono, le porteur final
+explose : **tous les autres joueurs gagnent la manche**.
+
+Le terrain est un **arène à 4 niveaux** (sol + 2 plateformes
+intermédiaires + plateforme du haut) avec deux paires de **tuyaux qui
+téléportent** entre étages (paire verte A1↔A2, paire orange B1↔B2). De
+quoi feinter l'adversaire et créer des poursuites verticales.
+
+- **Contrôles** : ← → (déplacement), Espace (saut), contact avec un
+  tuyau pour téléporter.
+- **Condition de victoire** : `Timeout` — tout le monde sauf le porteur
+  final gagne (`WinnersNumber` dynamique = nbJoueurs − 1).
 
 ### Légumes de l'espace (Space Vegetables)
 
@@ -257,8 +281,8 @@ doit être faite des deux côtés simultanément.
 
 - **CLIENT_* → serveur** : `CLIENT_CONNECTION`, `CLIENT_FOCUS`,
   `CLIENT_LOBBY_START`, `CLIENT_SCENE_FLOATING_ISLANDS_COLLIDE`,
-  `CLIENT_SCENE_FLOATING_ISLANDS_FALL`, `CLIENT_SCENE_MOVEMENT`,
-  `CLIENT_SCENE_STAR_WARS_COLLECT`, `CLIENT_WIN`.
+  `CLIENT_SCENE_FLOATING_ISLANDS_FALL`, `CLIENT_SCENE_HOT_POTATO_TAG`,
+  `CLIENT_SCENE_MOVEMENT`, `CLIENT_SCENE_STAR_WARS_COLLECT`, `CLIENT_WIN`.
 - **SERVER_* → clients** : `SERVER_CONNECTION`, `SERVER_COUNTDOWN`,
   `SERVER_GAME_START`, `SERVER_GAME_WAIT`, `SERVER_LOBBY_COLLAPSE`,
   `SERVER_LOBBY_END`, `SERVER_LOBBY_INTERRUPT`, `SERVER_SCENE_DATA`,

@@ -43,6 +43,7 @@ import EndScene from '@/models/scenes/end-scene'
 import EventTypes from '@/constants/event-types'
 import GameFallingApplesScene from '@/models/scenes/game-falling-apples-scene'
 import GameFloatingIslandsScene from '@/models/scenes/game-floating-islands-scene'
+import GameHotPotatoScene from '@/models/scenes/game-hot-potato-scene'
 import GameSpaceVegetablesScene from '@/models/scenes/game-space-vegetables-scene'
 import GameStarWarsScene from '@/models/scenes/game-star-wars-scene'
 import PacketClientFocus from '@/models/packets/packet-client-focus'
@@ -102,6 +103,7 @@ export default {
         case SceneKeys.END: return EndScene
         case SceneKeys.GAME_FALLING_APPLES: return GameFallingApplesScene
         case SceneKeys.GAME_FLOATING_ISLANDS: return GameFloatingIslandsScene
+        case SceneKeys.GAME_HOT_POTATO: return GameHotPotatoScene
         case SceneKeys.GAME_SPACE_VEGETABLES: return GameSpaceVegetablesScene
         case SceneKeys.GAME_STAR_WARS: return GameStarWarsScene
         case SceneKeys.LOBBY: return LobbyScene

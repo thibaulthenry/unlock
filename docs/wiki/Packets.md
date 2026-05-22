@@ -74,6 +74,18 @@ reste, il est déclaré vainqueur via `CLIENT_WIN`.
 { "label": "CLIENT_SCENE_FLOATING_ISLANDS_FALL" }
 ```
 
+### `CLIENT_SCENE_HOT_POTATO_TAG`
+
+Émis par le client porteur de la bombe lorsque son axolotl entre en
+collision (proximité < 60 px) avec un autre. Le serveur valide que
+l'émetteur est bien le porteur en cours et que le cooldown (1 s entre
+transferts) est expiré ; si oui, met à jour le porteur et rediffuse
+l'état via `SERVER_SCENE_DATA`.
+
+```json
+{ "label": "CLIENT_SCENE_HOT_POTATO_TAG", "taggedUuid": "..." }
+```
+
 ### `CLIENT_SCENE_MOVEMENT`
 
 Émis ~30 fois par seconde par chaque client pour propager sa position
