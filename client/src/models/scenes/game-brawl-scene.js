@@ -136,6 +136,16 @@ export default class GameBrawlScene extends Scene {
     return SPAWN_POSITIONS[idx % SPAWN_POSITIONS.length]
   }
 
+  // Remplace les positions par défaut du pseudo et du triangle pour
+  // qu'ils apparaissent au-dessus de la barre de vie au lieu de la
+  // chevaucher. Appliqué à chaque instance créée dans la Bagarre.
+  patchAxolotlNameOffset(axolotl) {
+    const origName = axolotl.updateNamePosition.bind(axolotl)
+    const origTri = axolotl.updateNameTrianglePosition.bind(axolotl)
+    axolotl.updateNamePosition = (x, _y) => origName(x, axolotl.body ? axolotl.body.y - 38 : _y)
+    axolotl.updateNameTrianglePosition = (x, _y) => origTri(x, axolotl.body ? axolotl.body.y - 26 : _y)
+  }
+
   maybeSpawnLocalAxolotl() {
     if (this.axolotl || !this.gameData) return
     if (!this.gameData.players.includes(store.state.client.uuid)) {
@@ -153,6 +163,7 @@ export default class GameBrawlScene extends Scene {
         store.state.client.name,
         store.state.client.spriteColor,
     )
+    this.patchAxolotlNameOffset(this.axolotl)
     this.axolotlsMap.set(store.state.client.uuid, this.axolotl)
     this.physics.add.collider(this.axolotl, this.platforms)
     this.cameras.main.startFollow(this.axolotl, true, 0.1, 0.1)
@@ -168,6 +179,7 @@ export default class GameBrawlScene extends Scene {
         player.name,
         player.spriteColor,
     )
+    this.patchAxolotlNameOffset(sprite)
     this.physics.add.collider(sprite, this.platforms)
     this.axolotlsMap.set(uuid, sprite)
   }
@@ -182,7 +194,9 @@ export default class GameBrawlScene extends Scene {
     }
   }
 
-  // Met à jour la barre de vie au-dessus de chaque participant.
+  // Met à jour la barre de vie au-dessus de chaque participant, et
+  // remonte le label du pseudo au-dessus de la barre (sinon ils se
+  // superposent, le pseudo étant à y-28 et la barre à y-16 par défaut).
   updateHpBars() {
     if (!this.gameData) return
     const initialHp = this.gameData.initialHp || 5
@@ -216,6 +230,10 @@ export default class GameBrawlScene extends Scene {
       } else {
         bar.capMark.setVisible(false)
       }
+
+      // Le décalage du pseudo (au-dessus de la barre) est appliqué via
+      // patchAxolotlNameOffset() au moment du spawn de chaque axolotl,
+      // donc rien à faire ici.
     }
   }
 
