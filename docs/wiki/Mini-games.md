@@ -104,19 +104,29 @@ le menu natif.
 
 ### Animation du coup de poing
 
-Au lancement d'un punch, l'axolotl effectue un petit **lunge** (tween
-horizontal yoyo de 110 ms), un **halo rouge** entoure son poing avec un
-cercle blanc cerclé de rouge au centre, et le texte « POW! » en jaune
-gras apparaît au-dessus. Le tout grossit jusqu'à 1.8× puis s'estompe sur
-700 ms. Le serveur valide indépendamment ; le visuel est purement local
-pour le ressenti.
+Le coup de poing utilise de **vraies frames de spritesheet** : chaque
+sheet axolotl a été étendu (300×344, 4 rangées) avec deux poses punch
+dessinées par `scripts/generate-sprites.py` — frame 8 (droite) et
+frame 9 (gauche). La pose montre l'axolotl penché en avant, le poing
+tendu (ovale type mitaine avec ombrage), et des traits de vitesse à
+l'arrière. Les couleurs sont échantillonnées sur chaque sheet (corps,
+contour) pour rester cohérentes avec les 10 variantes d'axolotl.
+
+À l'exécution, `Axolotl.playPunch(direction)` verrouille l'animation
+pendant 280 ms (flag `punching` qui court-circuite `playAnimations`),
+accompagné d'un petit lunge (tween yoyo 110 ms) et d'un « POW! » jaune
+qui monte en s'estompant. Le punch est broadcast aux autres clients via
+`lastPunch {uuid, atMs, directionRight}` dans `SERVER_SCENE_DATA`, donc
+les adversaires voient aussi la pose sur le sprite de l'attaquant.
 
 ### Esquive surf
 
 Le clic gauche déclenche l'esquive : l'axolotl devient **translucide**
-(alpha 0.4) pendant 500 ms et une **vague d'eau** (deux ellipses bleues
-cyan + blanche imbriquées) apparaît sous ses pieds, animée d'un léger
-yoyo de mise à l'échelle. Pendant la fenêtre, le joueur est immunisé
+(alpha 0.4) pendant 500 ms et **surfe sur une vague animée** — une
+spritesheet dédiée (`assets/sprites/waves/wave.png`, 4 frames 100×40
+générées en pixel-art : eau bleue dégradée, crête d'écume blanche qui
+ondule, gouttelettes) jouée en boucle à 10 fps sous ses pieds, flippée
+selon la direction du regard. Pendant la fenêtre, le joueur est immunisé
 aux coups de poing (cf. `PunchableTargets` qui filtre `Dodging`) et aux
 bombes (le bomb-hit consomme la bombe sans dégât).
 

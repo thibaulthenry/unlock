@@ -23,6 +23,7 @@ type DataSceneBrawl struct {
 	ElapsedMillis int                     `json:"elapsedMillis"`
 	Dodging       map[string]bool         `json:"dodging"`
 	DodgeReadyAt  map[string]int64        `json:"dodgeReadyAt"`
+	LastPunch     *BrawlPunch             `json:"lastPunch"`
 
 	// Champs internes non sérialisés.
 	StartMillis  int64                       `json:"-" firestore:"-"`
@@ -34,6 +35,14 @@ type DataSceneBrawl struct {
 type BrawlBomb struct {
 	Key string  `json:"key"`
 	X   float64 `json:"x"`
+}
+
+// BrawlPunch décrit le dernier coup de poing lancé, pour que les clients
+// distants jouent l'animation correspondante sur le bon sprite.
+type BrawlPunch struct {
+	Uuid           string `json:"uuid"`
+	AtMs           int64  `json:"atMs"`
+	DirectionRight bool   `json:"directionRight"`
 }
 
 const (

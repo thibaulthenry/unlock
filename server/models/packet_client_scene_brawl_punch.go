@@ -42,6 +42,13 @@ func (packet *PacketClientSceneBrawlPunch) Receive(client *Client) (err error) {
 	// punches des autres).
 	data.Positions[client.Uuid] = &Coordinates{X: packet.X, Y: packet.Y}
 
+	// Expose le coup aux autres clients pour l'animation distante.
+	data.LastPunch = &BrawlPunch{
+		Uuid:           client.Uuid,
+		AtMs:           now,
+		DirectionRight: packet.DirectionRight,
+	}
+
 	targets := data.PunchableTargets(client.Uuid, packet.X, packet.Y, packet.DirectionRight)
 	for _, t := range targets {
 		data.ApplyDamage(t, 1)

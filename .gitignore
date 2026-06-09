@@ -16,3 +16,4 @@ firebase-debug.log
 .DS_Store
 .idea/
 *.swp
+__pycache__/

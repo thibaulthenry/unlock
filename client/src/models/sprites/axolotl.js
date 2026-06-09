@@ -83,6 +83,40 @@ export default class Axolotl extends GameObjects.Sprite {
       frames: this.anims.generateFrameNumbers(`axolotl-${this.color}`, {start: 7, end: 7}),
       frameRate: 6,
     })
+
+    // Frames de coup de poing (8 : droite, 9 : gauche), générées par
+    // scripts/generate-sprites.py dans les cellules ajoutées au sheet.
+    this.anims.create({
+      key: `axolotl-${this.color}-punch-${SpriteDirections.RIGHT}`,
+      frames: this.anims.generateFrameNumbers(`axolotl-${this.color}`, {start: 8, end: 8}),
+      frameRate: 1,
+    })
+
+    this.anims.create({
+      key: `axolotl-${this.color}-punch-${SpriteDirections.LEFT}`,
+      frames: this.anims.generateFrameNumbers(`axolotl-${this.color}`, {start: 9, end: 9}),
+      frameRate: 1,
+    })
+  }
+
+  // Joue la frame de coup de poing pendant durationMs : le flag punching
+  // verrouille playAnimations pour que update()/les mouvements distants
+  // n'écrasent pas la pose en cours.
+  playPunch(direction = this.direction, durationMs = 280) {
+    if (!this.anims) {
+      return
+    }
+
+    this.punching = true
+    this.play(`axolotl-${this.color}-punch-${direction}`, true)
+
+    if (this.punchTimer) {
+      clearTimeout(this.punchTimer)
+    }
+    this.punchTimer = setTimeout(() => {
+      this.punching = false
+      this.punchTimer = null
+    }, durationMs)
   }
 
   destroy() {
@@ -143,6 +177,11 @@ export default class Axolotl extends GameObjects.Sprite {
 
   playAnimations(direction = this.direction, jumping = this.jumping, walking = this.walking) {
     if (!this.anims) {
+      return
+    }
+
+    // Pendant un coup de poing, la pose punch a la priorité.
+    if (this.punching) {
       return
     }
 

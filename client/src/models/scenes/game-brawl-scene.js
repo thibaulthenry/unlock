@@ -119,6 +119,14 @@ export default class GameBrawlScene extends Scene {
     this.platforms = this.physics.add.staticGroup()
     this.terrainBuilt = false
 
+    // Animation de la vague d'esquive (loop sur les 4 frames).
+    this.anims.create({
+      key: 'dodge-wave-roll',
+      frames: this.anims.generateFrameNumbers('dodge-wave', { start: 0, end: 3 }),
+      frameRate: 10,
+      repeat: -1,
+    })
+
     this.throttledMovement = throttle(this.broadcastMovement.bind(this), 50)
   }
 
@@ -292,34 +300,24 @@ export default class GameBrawlScene extends Scene {
       // Translucidité de l'axolotl.
       sprite.setAlpha(dodging ? 0.4 : (hp > 0 ? 1 : 0.7))
 
-      // Vague d'eau sous l'axolotl pendant l'esquive.
+      // Vague de surf animée sous l'axolotl pendant l'esquive (sprite
+      // 4 frames généré par scripts/generate-sprites.py).
       let wave = this.dodgeWaves.get(uuid)
       if (dodging) {
         const wx = sprite.body.x + sprite.body.width / 2
-        const wy = sprite.body.y + sprite.body.height - 4
+        const wy = sprite.body.y + sprite.body.height - 8
         if (!wave) {
-          const big = this.add.ellipse(wx, wy, 90, 22, 0x66d9ff, 0.65)
-              .setStrokeStyle(2, 0xaae5ff)
+          wave = this.add.sprite(wx, wy, 'dodge-wave')
               .setDepth(2)
-          const small = this.add.ellipse(wx, wy + 4, 50, 10, 0xffffff, 0.85)
-              .setDepth(3)
-          wave = { big, small }
+              .setAlpha(0.95)
+          wave.play('dodge-wave-roll')
           this.dodgeWaves.set(uuid, wave)
-          // Anime un petit bobbing.
-          this.tweens.add({
-            targets: [big, small],
-            scaleX: 1.15,
-            scaleY: 0.85,
-            yoyo: true,
-            duration: 250,
-            repeat: 1,
-          })
         }
-        wave.big.setPosition(wx, wy)
-        wave.small.setPosition(wx, wy + 4)
+        wave.setPosition(wx, wy)
+        // La vague suit la direction du surfeur.
+        wave.setFlipX(sprite.direction === 'left')
       } else if (wave) {
-        wave.big.destroy()
-        wave.small.destroy()
+        wave.destroy()
         this.dodgeWaves.delete(uuid)
       }
 
@@ -478,44 +476,58 @@ export default class GameBrawlScene extends Scene {
     const right = this.lastDirectionRight
     store.dispatch('sendPacket', new PacketClientSceneBrawlPunch(x, y, right))
 
-    // ANIMATION : petit "lunge" de l'axolotl + cercle de choc devant lui.
-    const dirSign = right ? 1 : -1
+    this.animatePunch(this.axolotl, right)
+    if (import.meta.env.DEV) {
+      window.__lastPunch = { x, y, right, at: Date.now() }
+    }
+  }
+
+  // Joue l'animation de coup de poing sur un sprite : pose punch dessinée
+  // dans le spritesheet (frame 8/9) + lunge + "POW!" au point d'impact.
+  animatePunch(sprite, directionRight) {
+    if (!sprite || !sprite.body) return
+    const dirSign = directionRight ? 1 : -1
+
+    sprite.playPunch(directionRight ? 'right' : 'left')
+
     this.tweens.add({
-      targets: this.axolotl,
-      x: this.axolotl.x + 18 * dirSign,
+      targets: sprite,
+      x: sprite.x + 16 * dirSign,
       duration: 110,
       yoyo: true,
     })
-    const fistX = x + 55 * dirSign
-    // Halo rouge + cercle blanc cerclé pour bien trancher sur n'importe
-    // quel fond (axolotl, bombe, plateforme).
-    const halo = this.add.circle(fistX, y - 4, 28, 0xff2a2a, 0.55)
-        .setStrokeStyle(4, 0xffe066, 1)
-        .setDepth(25)
-    const knuck = this.add.circle(fistX, y - 4, 14, 0xffffff, 1)
-        .setStrokeStyle(3, 0xff2a2a, 1)
-        .setDepth(26)
-    const bam = this.add.text(fistX, y - 44, 'POW!', {
-      fontSize: '28px',
+
+    const x = sprite.body.x + sprite.body.width / 2
+    const y = sprite.body.y + sprite.body.height / 2
+    const bam = this.add.text(x + 58 * dirSign, y - 24, 'POW!', {
+      fontSize: '22px',
       color: '#ffe066',
       fontStyle: 'bold',
       stroke: '#000000',
-      strokeThickness: 6,
+      strokeThickness: 5,
     }).setOrigin(0.5, 0.5).setDepth(27)
     this.tweens.add({
-      targets: [halo, knuck, bam],
-      scaleX: 1.8,
-      scaleY: 1.8,
+      targets: bam,
+      y: bam.y - 14,
+      scaleX: 1.4,
+      scaleY: 1.4,
       alpha: 0,
-      duration: 700,
-      onComplete: () => {
-        halo.destroy()
-        knuck.destroy()
-        bam.destroy()
-      },
+      duration: 450,
+      onComplete: () => bam.destroy(),
     })
-    if (import.meta.env.DEV) {
-      window.__lastPunch = { halo, knuck, bam, x: fistX, y: y - 4 }
+  }
+
+  // Rejoue l'animation de punch d'un adversaire quand le serveur diffuse
+  // un nouveau lastPunch dans SCENE_DATA.
+  playRemotePunch(lastPunch) {
+    if (!lastPunch || !lastPunch.uuid) return
+    if (lastPunch.atMs === this.lastSeenPunchAt) return
+    this.lastSeenPunchAt = lastPunch.atMs
+    if (lastPunch.uuid === store.state.client.uuid) return  // déjà joué localement
+
+    const sprite = this.axolotlsMap.get(lastPunch.uuid)
+    if (sprite) {
+      this.animatePunch(sprite, lastPunch.directionRight)
     }
   }
 
@@ -541,6 +553,7 @@ export default class GameBrawlScene extends Scene {
           this.gameData = p.data
           if (!this.terrainBuilt) this.buildTerrain(this.gameData.terrainId)
           this.refreshRemoteAxolotls()
+          this.playRemotePunch(this.gameData.lastPunch)
         })
         break
       case PacketLabels.SERVER_SCENE_MOVEMENT:
@@ -565,6 +578,13 @@ export default class GameBrawlScene extends Scene {
     }
 
     SceneUtils.preloadAxolotls(this)
+
+    // Vague d'esquive : 4 frames 100x40 générées par
+    // scripts/generate-sprites.py.
+    this.load.spritesheet('dodge-wave', '../assets/sprites/waves/wave.png', {
+      frameWidth: 100,
+      frameHeight: 40,
+    })
 
     this.cursors = this.input.keyboard.createCursorKeys()
     this.cursors.KeyQ = this.input.keyboard.addKey(Input.Keyboard.KeyCodes.Q)
