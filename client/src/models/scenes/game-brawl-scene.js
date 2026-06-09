@@ -163,13 +163,24 @@ export default class GameBrawlScene extends Scene {
   }
 
   // Remplace les positions par défaut du pseudo et du triangle pour
-  // qu'ils apparaissent au-dessus de la barre de vie au lieu de la
-  // chevaucher. Appliqué à chaque instance créée dans la Bagarre.
+  // qu'ils apparaissent au-dessus de la barre de vie tout en respectant
+  // la distance pseudo ↔ triangle d'origine (25 px).
+  //
+  // Géométrie d'origine sur l'Axolotl :
+  //   pseudo   centre Y = body.y - 28
+  //   triangle pointe Y = body.y - 3       (juste au-dessus du sprite)
+  //   écart                  25 px
+  //
+  // Dans Brawl, la barre de vie est centrée à body.y - 16 (back de
+  // hauteur 8 → couvre body.y - 20 à body.y - 12). On glisse le tout :
+  //   triangle pointe Y = body.y - 22      (juste au-dessus de la barre)
+  //   pseudo   centre Y = body.y - 47      (= triangle - 25, écart
+  //                                          identique à l'original)
   patchAxolotlNameOffset(axolotl) {
     const origName = axolotl.updateNamePosition.bind(axolotl)
     const origTri = axolotl.updateNameTrianglePosition.bind(axolotl)
-    axolotl.updateNamePosition = (x, _y) => origName(x, axolotl.body ? axolotl.body.y - 38 : _y)
-    axolotl.updateNameTrianglePosition = (x, _y) => origTri(x, axolotl.body ? axolotl.body.y - 26 : _y)
+    axolotl.updateNamePosition = (x, _y) => origName(x, axolotl.body ? axolotl.body.y - 47 : _y)
+    axolotl.updateNameTrianglePosition = (x, _y) => origTri(x, axolotl.body ? axolotl.body.y - 22 : _y)
   }
 
   maybeSpawnLocalAxolotl() {
