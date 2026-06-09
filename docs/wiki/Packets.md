@@ -54,6 +54,29 @@ pour éliminer un joueur qui Alt-Tab pendant la partie.
 { "label": "CLIENT_FOCUS", "state": true }
 ```
 
+### `CLIENT_SCENE_BRAWL_BOMB_HIT`
+
+Émis par le client participant à la Bagarre quand son axolotl entre en
+collision avec une bombe tombant du ciel. Le serveur supprime la bombe
+et inflige 2 PV de dégât à l'émetteur (et seulement à lui : un seul
+client signale par bombe).
+
+```json
+{ "label": "CLIENT_SCENE_BRAWL_BOMB_HIT", "bombKey": "..." }
+```
+
+### `CLIENT_SCENE_BRAWL_PUNCH`
+
+Émis par le client participant à la Bagarre quand il appuie sur Espace.
+Le serveur valide le cooldown (400 ms par joueur), regarde les
+positions connues des autres participants, et inflige 1 PV de dégât à
+ceux qui sont dans une boîte de 80 px horizontaux et 60 px verticaux
+dans la direction face.
+
+```json
+{ "label": "CLIENT_SCENE_BRAWL_PUNCH", "x": 350.5, "y": 420, "directionRight": true }
+```
+
 ### `CLIENT_SCENE_FLOATING_ISLANDS_COLLIDE`
 
 Émis chaque fois que l'axolotl atterrit sur une île. Le serveur lance un

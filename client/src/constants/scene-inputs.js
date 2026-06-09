@@ -44,6 +44,21 @@ export default {
             slide: false
         }
     },
+    'GameBrawl': {
+        keyboard: {
+            down: false,
+            left: true,
+            right: true,
+            space: true,
+            up: true
+        },
+        mouse: {
+            leftClick: false,
+            middleClick: false,
+            rightClick: false,
+            slide: false
+        }
+    },
     'GameHotPotato': {
         keyboard: {
             down: false,

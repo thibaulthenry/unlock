@@ -41,6 +41,7 @@
 import bus from '@/services/event-bus'
 import EndScene from '@/models/scenes/end-scene'
 import EventTypes from '@/constants/event-types'
+import GameBrawlScene from '@/models/scenes/game-brawl-scene'
 import GameFallingApplesScene from '@/models/scenes/game-falling-apples-scene'
 import GameFloatingIslandsScene from '@/models/scenes/game-floating-islands-scene'
 import GameHotPotatoScene from '@/models/scenes/game-hot-potato-scene'
@@ -101,6 +102,7 @@ export default {
     getSceneByKey(sceneKey) {
       switch (sceneKey) {
         case SceneKeys.END: return EndScene
+        case SceneKeys.GAME_BRAWL: return GameBrawlScene
         case SceneKeys.GAME_FALLING_APPLES: return GameFallingApplesScene
         case SceneKeys.GAME_FLOATING_ISLANDS: return GameFloatingIslandsScene
         case SceneKeys.GAME_HOT_POTATO: return GameHotPotatoScene

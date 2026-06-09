@@ -1,7 +1,7 @@
 # Unlock
 
 > Jeu multijoueur en temps réel inspiré du party game. Jusqu'à 10 joueurs
-> s'affrontent dans une suite de **cinq mini-jeux** ; le premier qui atteint
+> s'affrontent dans une suite de **six mini-jeux** ; le premier qui atteint
 > le nombre de clés requis (`pointsGoal`) gagne la partie et s'échappe du donjon.
 
 ![Page d'accueil](docs/screenshots/01-home.png)
@@ -10,6 +10,7 @@
 
 - [Concept](#concept)
 - [Les mini-jeux](#les-mini-jeux)
+  - [Bagarre (Brawl)](#bagarre-brawl)
   - [Chute de pommes (Falling Apples)](#chute-de-pommes-falling-apples)
   - [Îles flottantes (Floating Islands)](#îles-flottantes-floating-islands)
   - [Bombe humaine (Hot Potato)](#bombe-humaine-hot-potato)
@@ -50,9 +51,46 @@ sur les axolotls.
 
 ## Les mini-jeux
 
-Chaque mini-jeu dure environ 25-30 secondes. Le serveur tire le suivant au
-hasard parmi les cinq disponibles, en évitant de relancer deux fois de
-suite le même.
+Chaque mini-jeu dure entre 25 et 60 secondes selon le concept. Le serveur
+tire le suivant au hasard parmi les six disponibles, en évitant de
+relancer deux fois de suite le même.
+
+### Bagarre (Brawl)
+
+![Bagarre - début de match](docs/screenshots/04-game-brawl-start.png)
+
+> **Objectif** : être le dernier debout en mettant KO vos adversaires
+> à coups de poing.
+
+Combat **free-for-all entre 2 ou 3 participants** tirés au sort (3 si
+le lobby a un nombre impair de joueurs, 2 sinon) sur l'un de **3 terrains
+style Smash Bros** : Battlefield, Final Destination ou Stairs. Les autres
+joueurs sont spectateurs pour cette manche.
+
+Chaque participant commence avec **5 PV**. Un coup de poing inflige
+**1 PV de dégât**, une bombe en inflige **2**.
+
+Deux mécaniques de pression au fil du temps :
+
+- **À partir de 30 s** : des **bombes tombent du ciel** à intervalles
+  aléatoires sur la zone de combat.
+- **À partir de 45 s** (15 s restants) : le **plafond de PV décroît
+  linéairement** de 5 à 1, forçant les survivants à terminer le combat —
+  dans les dernières secondes, **un coup de poing élimine**.
+
+![Bagarre - phase finale avec bombes](docs/screenshots/04-game-brawl-bombs.png)
+
+**Égalité** : si à la fin des 60 s il n'y a pas exactement un seul
+survivant, **personne ne gagne de point** (égalité parfaite).
+
+- **Contrôles** : ← → (déplacement), Espace ou ↑ (saut), Espace tenu
+  rapide ou contact avec un adversaire (punch). Les barres de vie au-
+  dessus de chaque axolotl indiquent les PV (vert / jaune / rouge) avec
+  un repère orange pour le HpCap courant.
+- **Condition de victoire** : `Timeout` — dernier debout, sinon aucun
+  vainqueur.
+
+### Chute de pommes (Falling Apples)
 
 ### Chute de pommes (Falling Apples)
 
@@ -280,7 +318,8 @@ entre les deux côtés casse le jeu silencieusement → toute modification
 doit être faite des deux côtés simultanément.
 
 - **CLIENT_* → serveur** : `CLIENT_CONNECTION`, `CLIENT_FOCUS`,
-  `CLIENT_LOBBY_START`, `CLIENT_SCENE_FLOATING_ISLANDS_COLLIDE`,
+  `CLIENT_LOBBY_START`, `CLIENT_SCENE_BRAWL_BOMB_HIT`,
+  `CLIENT_SCENE_BRAWL_PUNCH`, `CLIENT_SCENE_FLOATING_ISLANDS_COLLIDE`,
   `CLIENT_SCENE_FLOATING_ISLANDS_FALL`, `CLIENT_SCENE_HOT_POTATO_TAG`,
   `CLIENT_SCENE_MOVEMENT`, `CLIENT_SCENE_STAR_WARS_COLLECT`, `CLIENT_WIN`.
 - **SERVER_* → clients** : `SERVER_CONNECTION`, `SERVER_COUNTDOWN`,

@@ -1,7 +1,97 @@
 # Mini-jeux
 
-Cinq mini-jeux sont disponibles. Le serveur tire le suivant au hasard,
+Six mini-jeux sont disponibles. Le serveur tire le suivant au hasard,
 en évitant de relancer immédiatement le même que la manche précédente.
+
+## Bagarre (`GameBrawl`)
+
+![Bagarre - phase finale](../screenshots/04-game-brawl-bombs.png)
+
+> Combat free-for-all : mettez KO vos adversaires pour être le dernier
+> debout. Des bombes tombent et les PV se réduisent en fin de match.
+
+### Règles
+
+Le serveur sélectionne **2 ou 3 participants** au hasard parmi les
+joueurs du lobby :
+- 3 si le nombre de joueurs est impair,
+- 2 sinon.
+
+Les autres clients restent dans la scène en spectateurs (sans axolotl
+contrôlé) — ils ne gagnent ni ne perdent de point pour cette manche.
+
+Chaque participant démarre avec **5 PV**. Un coup de poing (touche
+Espace, validé par le serveur via les positions connues des joueurs)
+inflige 1 PV de dégât dans une portée de 80 px horizontaux et 60 px
+verticaux dans la direction face. Cooldown 400 ms par participant.
+
+### Trois terrains
+
+Tiré au sort par le serveur via `TerrainId` (0, 1 ou 2) :
+
+| ID | Nom              | Description                                        |
+|----|------------------|----------------------------------------------------|
+| 0  | Battlefield      | Sol large + 2 mini plateformes + 1 au sommet       |
+| 1  | Final Destination| Une seule longue plateforme suspendue              |
+| 2  | Stairs           | Escalier asymétrique (4 niveaux décalés)           |
+
+### Pression temporelle
+
+- **30 s** : début de la **pluie de bombes**. Le serveur en spawn une
+  en moyenne toutes les 1,5 s (avec un tirage aléatoire) à un X au
+  sommet de la scène. Les bombes tombent à 250 px/s (côté client) ; la
+  collision avec un axolotl inflige 2 PV et le client émet
+  `CLIENT_SCENE_BRAWL_BOMB_HIT` pour validation serveur.
+- **45 s** (15 s restants) : début de la **décroissance du HpCap**. Le
+  plafond de PV décroît linéairement de 5 à 1 : tous les PV au-dessus
+  du cap sont écrêtés à chaque tick (toutes les 500 ms). Conséquence :
+  dans la dernière seconde, **un coup suffit à tuer**.
+
+### Conditions de fin
+
+- Si un seul participant a encore des PV > 0 (à n'importe quel moment)
+  → il gagne immédiatement (+1 clé), la manche s'arrête.
+- À 60 s, si l'égalité persiste ou si tous les participants sont KO en
+  même temps → **personne ne marque** ; la manche se termine sans
+  vainqueur et la partie continue.
+
+### Côté serveur
+
+- Game type : Solo
+- WinnersNumber : 1
+- WinReward : 1 clé
+- Duration : 60 000 ms
+
+État serveur dans `server/models/data_scene_brawl.go` :
+- `Players []string` : UUID des participants sélectionnés
+- `Hps map[string]int` : PV actuel par UUID
+- `HpCap int` : plafond de PV courant (commence à 5, descend à 1)
+- `Bombs map[string]*BrawlBomb` : bombes en cours de chute
+- `Positions map[string]*Coordinates` : positions serveur des participants
+  (mémorisées via `CLIENT_SCENE_MOVEMENT`, utilisées pour valider les
+  punches)
+- `LastPunchAt map[string]int64` : timestamp du dernier coup par
+  attaquant (cooldown 400 ms)
+
+### Packets
+
+- `CLIENT_SCENE_BRAWL_PUNCH` : `{ x, y, directionRight }` — émis quand
+  le joueur appuie sur Espace. Le serveur cherche les cibles dans une
+  hitbox depuis (x, y) en fonction de la direction et applique 1 PV de
+  dégât à chacune.
+- `CLIENT_SCENE_BRAWL_BOMB_HIT` : `{ bombKey }` — émis quand la
+  collision locale entre l'axolotl du client et une bombe est détectée.
+  Le serveur supprime la bombe et applique 2 PV de dégât.
+
+### Animation du coup de poing
+
+Au lancement d'un punch, l'axolotl effectue un petit **lunge** (tween
+horizontal yoyo de 18 px), un **cercle blanc cerclé de rouge** apparaît
+devant lui pour 280 ms en s'agrandissant et s'estompant, accompagné du
+texte « POW! » en jaune. Le serveur valide indépendamment ; le visuel
+est purement local pour le ressenti.
+
+## Chute de pommes (`GameFallingApples`)
 
 Chaque manche dure environ **30 secondes** (`duration` dans
 `/games/{SceneKey}` côté Firestore). Le gagnant reçoit **1 clé**
@@ -199,6 +289,7 @@ FIRESTORE_EMULATOR_HOST=127.0.0.1:8181 GCP_PROJECT_ID=unlock-local \
 
 Le code de chaque scène est dans `client/src/models/scenes/` :
 
+- `game-brawl-scene.js`
 - `game-falling-apples-scene.js`
 - `game-floating-islands-scene.js`
 - `game-hot-potato-scene.js`
@@ -206,7 +297,10 @@ Le code de chaque scène est dans `client/src/models/scenes/` :
 - `game-star-wars-scene.js`
 
 Logique métier serveur :
-- `server/models/data_scene_star_wars.go` — StarWars (positions des étoiles)
+- `server/models/data_scene_brawl.go` — Bagarre (participants, PV,
+  HpCap, bombes, positions)
+- `server/models/data_scene_star_wars.go` — StarWars (positions des
+  étoiles)
 - `server/models/data_scene_floating_islands.go` — Floating Islands
   (îles, joueurs restants, étages, focus)
 - `server/models/data_scene_hot_potato.go` — Hot Potato (porteur,

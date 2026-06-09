@@ -23,6 +23,7 @@ const messages = {
         quit: 'Double-click to leave the game',
       },
       names: {
+        GameBrawl: 'Brawl',
         GameFallingApples: 'Falling Apples',
         GameFloatingIslands: 'Floating Islands',
         GameHotPotato: 'Hot Potato',
@@ -37,6 +38,7 @@ const messages = {
           startingImminent: 'Lobby is locked.\nThe game will start in a few seconds',
         },
         game: {
+          GameBrawl: 'Punch your opponents to be the last one standing. Bombs fall and HP shrinks at the end!',
           GameFallingApples: 'Collect 7 apples before other players',
           GameFloatingIslands: 'Stay alive by jumping between floating islands',
           GameHotPotato: 'Pass the bomb! Touch a player to get rid of it before it explodes',
@@ -112,6 +114,7 @@ const messages = {
         quit: 'Double-cliquer pour quitter la partie',
       },
       names: {
+        GameBrawl: 'Bagarre',
         GameFallingApples: 'Chute de pommes',
         GameFloatingIslands: 'Îles flottantes',
         GameHotPotato: 'Bombe humaine',
@@ -126,6 +129,7 @@ const messages = {
           startingImminent: 'Le lobby est verrouillé.\nDémarrage du jeu dans quelques secondes',
         },
         game: {
+          GameBrawl: 'Mettez KO vos adversaires ! Des bombes tombent et les PV se réduisent à la fin',
           GameFallingApples: 'Récoltez 7 pommes avant les autres joueurs',
           GameFloatingIslands: 'Restez en vie en sautant entre les îles flottantes',
           GameHotPotato: 'Refilez la bombe ! Touchez un autre joueur pour vous en débarrasser avant qu\'elle n\'explose',

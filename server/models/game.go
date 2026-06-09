@@ -2,6 +2,8 @@ package models
 
 import (
 	"github.com/google/uuid"
+	"math"
+	"math/rand"
 	"sync"
 	"time"
 	"unlock/constants"
@@ -74,6 +76,83 @@ func (game *Game) HandleGameData(lobby *Lobby) (err error) {
 		})
 
 		game.AddTimeoutUuid(timeoutUuid)
+
+	case constants.SceneKeyGameBrawl:
+		data := NewDataSceneBrawl(lobby, time.Now().UnixMilli())
+		game.Data = data
+		game.WinnersNumber = 1
+
+		// Diffuse l'état initial (participants, terrain) après un court
+		// délai pour laisser les clients basculer sur la scène.
+		initUuid := lobby.Timeout(400, func() (err error) {
+			return NewPacketServerSceneData(data, constants.SceneKeyGameBrawl).Send(lobby)
+		})
+		game.AddTimeoutUuid(initUuid)
+
+		// Tick 500 ms : spawn de bombes après 30s, décroissance du HpCap
+		// dans les 15 dernières secondes, diffusion régulière de l'état.
+		bombSpawnAccumulator := 0
+		tickUuid := lobby.TimeoutTick(game.Duration, func() error { return nil }, 500,
+			func(startTime time.Time) error {
+				if data.Finalized {
+					return nil
+				}
+				elapsed := int(time.Since(startTime).Milliseconds())
+				data.ElapsedMillis = elapsed
+
+				// Spawn bombes entre 30s et 60s, en moyenne une toutes
+				// les 1.5 s, à un x aléatoire.
+				if elapsed >= BrawlBombSpawnAfter && elapsed < BrawlDurationMs {
+					bombSpawnAccumulator += 500
+					if bombSpawnAccumulator >= 1500 && rand.Intn(2) == 0 {
+						data.SpawnBomb()
+						bombSpawnAccumulator = 0
+					}
+				}
+
+				// Décroissance HpCap entre 45s et 60s : ratio remaining /
+				// 15s, le cap passe linéairement de InitialHp à 1.
+				if elapsed >= BrawlCapDecayStart {
+					remaining := BrawlDurationMs - elapsed
+					if remaining < 0 {
+						remaining = 0
+					}
+					ratio := float64(remaining) / float64(BrawlDurationMs-BrawlCapDecayStart)
+					if ratio < 0 {
+						ratio = 0
+					}
+					if ratio > 1 {
+						ratio = 1
+					}
+					newCap := int(math.Ceil(ratio*float64(BrawlInitialHp-1))) + 1
+					if newCap < 1 {
+						newCap = 1
+					}
+					data.HpCap = newCap
+					data.ApplyHpCap()
+				}
+
+				return NewPacketServerSceneData(data, constants.SceneKeyGameBrawl).Send(lobby)
+			})
+		game.AddTimeoutUuid(tickUuid)
+
+		// Au timeout final (60 s), si un seul participant est encore en
+		// vie il gagne, sinon personne (game.State passera à Ended via
+		// le countdown standard, aucun PacketClientWin n'est appelé donc
+		// aucun point n'est distribué).
+		finalUuid := lobby.Timeout(game.Duration, func() (err error) {
+			if data.Finalized {
+				return nil
+			}
+			data.Finalized = true
+			alive := data.AlivePlayers()
+			if len(alive) == 1 {
+				win := &PacketClientWin{}
+				return win.Receive(lobby.Clients[alive[0]])
+			}
+			return nil
+		})
+		game.AddTimeoutUuid(finalUuid)
 
 	case constants.SceneKeyGameHotPotato:
 		data := NewDataSceneHotPotato(lobby)

@@ -49,6 +49,26 @@ func HandlePacket(client *Client, payload []byte) (err error) {
 
 		return packet.Receive(client)
 
+	case constants.PacketClientSceneBrawlBombHit:
+		var packet PacketClientSceneBrawlBombHit
+
+		err = json.Unmarshal(payload, &packet)
+		if err != nil {
+			return err
+		}
+
+		return packet.Receive(client)
+
+	case constants.PacketClientSceneBrawlPunch:
+		var packet PacketClientSceneBrawlPunch
+
+		err = json.Unmarshal(payload, &packet)
+		if err != nil {
+			return err
+		}
+
+		return packet.Receive(client)
+
 	case constants.PacketClientSceneFloatingIslandsCollide:
 		var packet PacketClientSceneFloatingIslandCollide
 

@@ -20,6 +20,14 @@ const base = `http://${host}/v1/projects/${project}/databases/(default)/document
 // GameType: Solo=0, Duo=1, Team=2
 // GameWinCondition: First=0, Timeout=1
 const games = {
+  GameBrawl: {
+    sceneKey: 'GameBrawl',
+    duration: 60000,     // 60 secondes
+    type: 0,             // Solo (free-for-all)
+    winCondition: 1,     // Timeout (dernier debout, sinon nul)
+    winnersNumber: 1,
+    winReward: 1,
+  },
   GameFallingApples: {
     sceneKey: 'GameFallingApples',
     duration: 30000,

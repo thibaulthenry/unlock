@@ -4,6 +4,8 @@ const (
 	PacketClientConnection                  = "CLIENT_CONNECTION"
 	PacketClientFocus                       = "CLIENT_FOCUS"
 	PacketClientLobbyStart                  = "CLIENT_LOBBY_START"
+	PacketClientSceneBrawlBombHit           = "CLIENT_SCENE_BRAWL_BOMB_HIT"
+	PacketClientSceneBrawlPunch             = "CLIENT_SCENE_BRAWL_PUNCH"
 	PacketClientSceneFloatingIslandsCollide = "CLIENT_SCENE_FLOATING_ISLANDS_COLLIDE"
 	PacketClientSceneFloatingIslandsFall    = "CLIENT_SCENE_FLOATING_ISLANDS_FALL"
 	PacketClientSceneHotPotatoTag           = "CLIENT_SCENE_HOT_POTATO_TAG"
