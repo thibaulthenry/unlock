@@ -110,10 +110,12 @@ export default class GameBrawlScene extends Scene {
       }
     })
 
-    // Le terrain est dessiné une fois qu'on connaît terrainId (via le
-    // premier SERVER_SCENE_DATA). En attendant, fond neutre.
-    this.bgRect = this.add.rectangle(this.sceneWidth / 2, this.sceneHeight / 2, this.sceneWidth, this.sceneHeight, 0x000000)
-        .setScrollFactor(0)
+    // --- Background (oversized pour couvrir la zone visible même quand
+    // la caméra est dézoomée à 0.75 et qu'elle est clampée à un bord de
+    // l'arène).
+    const bgW = this.sceneWidth + 1200
+    const bgH = this.sceneHeight + 1200
+    this.bgRect = this.add.rectangle(this.sceneWidth / 2, this.sceneHeight / 2, bgW, bgH, 0x000000)
     this.platforms = this.physics.add.staticGroup()
     this.terrainBuilt = false
 
