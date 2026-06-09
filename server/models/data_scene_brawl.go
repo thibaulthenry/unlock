@@ -21,6 +21,8 @@ type DataSceneBrawl struct {
 	Bombs         map[string]*BrawlBomb   `json:"bombs"`
 	TerrainId     int                     `json:"terrainId"`
 	ElapsedMillis int                     `json:"elapsedMillis"`
+	Dodging       map[string]bool         `json:"dodging"`
+	DodgeReadyAt  map[string]int64        `json:"dodgeReadyAt"`
 
 	// Champs internes non sérialisés.
 	StartMillis  int64                       `json:"-" firestore:"-"`
@@ -42,6 +44,8 @@ const (
 	BrawlBombSpawnAfter  = 30000 // ms à partir desquels des bombes spawnent
 	BrawlCapDecayStart   = 45000 // ms à partir desquels HpCap décroît
 	BrawlDurationMs      = 60000
+	BrawlDodgeDurationMs = 500   // durée d'invincibilité d'une esquive
+	BrawlDodgeCooldownMs = 8000  // temps avant de pouvoir esquiver à nouveau
 )
 
 // NewDataSceneBrawl sélectionne les participants et le terrain.
@@ -76,6 +80,8 @@ func NewDataSceneBrawl(lobby *Lobby, startMillis int64) *DataSceneBrawl {
 		Bombs:         make(map[string]*BrawlBomb),
 		TerrainId:     rand.Intn(3),
 		ElapsedMillis: 0,
+		Dodging:       make(map[string]bool),
+		DodgeReadyAt:  make(map[string]int64),
 		StartMillis:   startMillis,
 		Positions:     make(map[string]*Coordinates),
 		LastPunchAt:   make(map[string]int64),
@@ -129,7 +135,8 @@ func (d *DataSceneBrawl) ApplyHpCap() {
 }
 
 // PunchableTargets retourne les UUID des joueurs touchables depuis
-// (x, y) en regardant dans la direction directionRight.
+// (x, y) en regardant dans la direction directionRight. Les joueurs en
+// pleine esquive (Dodging) ne sont pas inclus.
 func (d *DataSceneBrawl) PunchableTargets(attackerUuid string, attackerX, attackerY float64, directionRight bool) []string {
 	targets := []string{}
 	for _, u := range d.Players {
@@ -137,6 +144,9 @@ func (d *DataSceneBrawl) PunchableTargets(attackerUuid string, attackerX, attack
 			continue
 		}
 		if d.Hps[u] <= 0 {
+			continue
+		}
+		if d.Dodging[u] {
 			continue
 		}
 		pos, ok := d.Positions[u]

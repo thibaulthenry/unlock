@@ -2,6 +2,7 @@ import { Input, Scene } from 'phaser'
 import Axolotl from '@/models/sprites/axolotl'
 import { throttle } from 'lodash-es'
 import PacketClientSceneBrawlBombHit from '@/models/packets/packet-client-scene-brawl-bomb-hit'
+import PacketClientSceneBrawlDodge from '@/models/packets/packet-client-scene-brawl-dodge'
 import PacketClientSceneBrawlPunch from '@/models/packets/packet-client-scene-brawl-punch'
 import PacketClientSceneMovement from '@/models/packets/packet-client-scene-movement'
 import PacketLabels from '@/constants/packet-labels'
@@ -15,6 +16,9 @@ const PUNCH_COOLDOWN_MS = 500
 const BOMB_FALL_SPEED = 250         // px/s
 const BOMB_COLLIDE_DIST = 38         // px
 const SPAWN_POSITIONS = [200, 600, 1000]
+const DODGE_DURATION_MS = 500       // doit coller avec BrawlDodgeDurationMs côté serveur
+const DODGE_COOLDOWN_MS = 8000      // idem
+const CAMERA_ZOOM = 0.75            // dézoom 25 % pour voir plus de terrain
 
 // Trois terrains style Smash Bros, exprimés en blocs [x, y, w, h, color].
 // La scène fait 1200×600 px et a un sol implicite supplémentaire pour
@@ -69,9 +73,12 @@ export default class GameBrawlScene extends Scene {
     this.bombSprites = new Map()
     this.hpBars = new Map()
     this.deadOverlays = new Map()
+    this.dodgeWaves = new Map()
+    this.dodgeCooldowns = new Map()
     this.gameData = null
     this.delay = 0
     this.lastPunchAt = 0
+    this.lastDodgeRequestedAt = 0
     this.iAmParticipant = false
     this.lastDirectionRight = true
   }
@@ -80,9 +87,28 @@ export default class GameBrawlScene extends Scene {
     this.sceneWidth = 1200
     this.sceneHeight = 600
 
+    if (import.meta.env.DEV) {
+      window.__brawlScene = this
+    }
+
     this.physics.world.setBounds(0, 0, this.sceneWidth, this.sceneHeight + 200)
     this.cameras.main.setBounds(0, 0, this.sceneWidth, this.sceneHeight)
+    this.cameras.main.setZoom(CAMERA_ZOOM)
     this.cameras.main.fadeIn(500, 0, 0, 0)
+
+    // Souris : clic gauche = esquive surf, clic droit = punch.
+    // (Le menu contextuel du navigateur est déjà bloqué par Game.vue via
+    // preventRightClick sur window.)
+    this.input.mouse.disableContextMenu()
+    this.input.on('pointerdown', (pointer) => {
+      // pointer.button : 0 = gauche, 1 = milieu, 2 = droit (plus fiable
+      // que rightButtonDown() qui interroge l'état courant des boutons).
+      if (pointer.button === 2) {
+        this.doPunch()
+      } else if (pointer.button === 0) {
+        this.doDodge()
+      }
+    })
 
     // Le terrain est dessiné une fois qu'on connaît terrainId (via le
     // premier SERVER_SCENE_DATA). En attendant, fond neutre.
@@ -237,7 +263,86 @@ export default class GameBrawlScene extends Scene {
     }
   }
 
-  // Affiche un X gris sur les KO.
+  // Synchronise l'effet visuel d'esquive (axolotl translucide + planche
+  // d'eau qui passe sous lui) et l'indicateur de cooldown bleu, pour
+  // chaque participant.
+  updateDodgeVisuals() {
+    if (!this.gameData) return
+
+    for (const uuid of this.gameData.players) {
+      const sprite = this.axolotlsMap.get(uuid)
+      if (!sprite || !sprite.body) continue
+
+      const dodging = !!this.gameData.dodging?.[uuid]
+      const hp = this.gameData.hps?.[uuid] ?? 0
+
+      // Translucidité de l'axolotl.
+      sprite.setAlpha(dodging ? 0.4 : (hp > 0 ? 1 : 0.7))
+
+      // Vague d'eau sous l'axolotl pendant l'esquive.
+      let wave = this.dodgeWaves.get(uuid)
+      if (dodging) {
+        const wx = sprite.body.x + sprite.body.width / 2
+        const wy = sprite.body.y + sprite.body.height - 4
+        if (!wave) {
+          const big = this.add.ellipse(wx, wy, 90, 22, 0x66d9ff, 0.65)
+              .setStrokeStyle(2, 0xaae5ff)
+              .setDepth(2)
+          const small = this.add.ellipse(wx, wy + 4, 50, 10, 0xffffff, 0.85)
+              .setDepth(3)
+          wave = { big, small }
+          this.dodgeWaves.set(uuid, wave)
+          // Anime un petit bobbing.
+          this.tweens.add({
+            targets: [big, small],
+            scaleX: 1.15,
+            scaleY: 0.85,
+            yoyo: true,
+            duration: 250,
+            repeat: 1,
+          })
+        }
+        wave.big.setPosition(wx, wy)
+        wave.small.setPosition(wx, wy + 4)
+      } else if (wave) {
+        wave.big.destroy()
+        wave.small.destroy()
+        this.dodgeWaves.delete(uuid)
+      }
+
+      // Indicateur de cooldown : arc bleu qui se remplit, à droite de
+      // la barre de vie.
+      let gfx = this.dodgeCooldowns.get(uuid)
+      if (!gfx) {
+        gfx = this.add.graphics().setDepth(33)
+        this.dodgeCooldowns.set(uuid, gfx)
+      }
+      gfx.clear()
+      const cx = sprite.body.x + sprite.body.width / 2 + 40
+      const cy = sprite.body.y - 16
+      const now = Date.now()
+      const readyAt = this.gameData.dodgeReadyAt?.[uuid] ?? 0
+      const remaining = Math.max(0, readyAt - now)
+      const progress = Math.min(1, 1 - remaining / DODGE_COOLDOWN_MS)
+      // Anneau gris sombre en fond.
+      gfx.lineStyle(2, 0x0a2538, 0.9)
+      gfx.strokeCircle(cx, cy, 6)
+      if (progress >= 1) {
+        // Prêt : disque bleu plein.
+        gfx.fillStyle(0x4aa8ff, 1)
+        gfx.fillCircle(cx, cy, 5)
+        gfx.lineStyle(2, 0xa6dcff, 1)
+        gfx.strokeCircle(cx, cy, 6)
+      } else {
+        // En cooldown : portion bleue qui grossit dans le sens horaire.
+        gfx.fillStyle(0x4aa8ff, 0.95)
+        gfx.slice(cx, cy, 5, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * progress, false)
+        gfx.fillPath()
+      }
+    }
+  }
+
+  // Affiche un KO gris sur les éliminés.
   updateDeathOverlays() {
     if (!this.gameData) return
     for (const uuid of this.gameData.players) {
@@ -332,6 +437,22 @@ export default class GameBrawlScene extends Scene {
     })
   }
 
+  // Demande au serveur une esquive : cooldown 8 s, durée d'invincibilité
+  // 500 ms. Le serveur valide et broadcast Dodging[uuid]=true ; les
+  // visuels (axolotl translucide + vague) sont synchronisés via
+  // updateDodgeVisuals.
+  doDodge() {
+    if (!this.iAmParticipant) return
+    const uuid = store.state.client.uuid
+    if ((this.gameData?.hps?.[uuid] ?? 0) <= 0) return
+    const now = Date.now()
+    const readyAt = this.gameData?.dodgeReadyAt?.[uuid] ?? 0
+    if (now < readyAt) return
+    if (now - this.lastDodgeRequestedAt < 400) return  // anti spam local
+    this.lastDodgeRequestedAt = now
+    store.dispatch('sendPacket', new PacketClientSceneBrawlDodge())
+  }
+
   doPunch() {
     if (!this.iAmParticipant || !this.axolotl || !this.axolotl.body) return
     if ((this.gameData?.hps?.[store.state.client.uuid] ?? 0) <= 0) return
@@ -349,31 +470,40 @@ export default class GameBrawlScene extends Scene {
     this.tweens.add({
       targets: this.axolotl,
       x: this.axolotl.x + 18 * dirSign,
-      duration: 80,
+      duration: 110,
       yoyo: true,
     })
-    const fistX = x + 50 * dirSign
-    const fist = this.add.circle(fistX, y - 4, 8, 0xffffff)
-        .setStrokeStyle(3, 0xff4040)
+    const fistX = x + 55 * dirSign
+    // Halo rouge + cercle blanc cerclé pour bien trancher sur n'importe
+    // quel fond (axolotl, bombe, plateforme).
+    const halo = this.add.circle(fistX, y - 4, 28, 0xff2a2a, 0.55)
+        .setStrokeStyle(4, 0xffe066, 1)
         .setDepth(25)
-    const bam = this.add.text(fistX, y - 24, 'POW!', {
-      fontSize: '18px',
+    const knuck = this.add.circle(fistX, y - 4, 14, 0xffffff, 1)
+        .setStrokeStyle(3, 0xff2a2a, 1)
+        .setDepth(26)
+    const bam = this.add.text(fistX, y - 44, 'POW!', {
+      fontSize: '28px',
       color: '#ffe066',
       fontStyle: 'bold',
       stroke: '#000000',
-      strokeThickness: 4,
-    }).setOrigin(0.5, 0.5).setDepth(26)
+      strokeThickness: 6,
+    }).setOrigin(0.5, 0.5).setDepth(27)
     this.tweens.add({
-      targets: [fist, bam],
-      scaleX: 1.6,
-      scaleY: 1.6,
+      targets: [halo, knuck, bam],
+      scaleX: 1.8,
+      scaleY: 1.8,
       alpha: 0,
-      duration: 280,
+      duration: 700,
       onComplete: () => {
-        fist.destroy()
+        halo.destroy()
+        knuck.destroy()
         bam.destroy()
       },
     })
+    if (import.meta.env.DEV) {
+      window.__lastPunch = { halo, knuck, bam, x: fistX, y: y - 4 }
+    }
   }
 
   broadcastMovement() {
@@ -428,6 +558,10 @@ export default class GameBrawlScene extends Scene {
     this.cursors.KeyA = this.input.keyboard.addKey(Input.Keyboard.KeyCodes.A)
     this.cursors.KeyD = this.input.keyboard.addKey(Input.Keyboard.KeyCodes.D)
     this.cursors.KeyF = this.input.keyboard.addKey(Input.Keyboard.KeyCodes.F)
+    // E ou Shift gauche : esquive (raccourci clavier en miroir du clic
+    // gauche pour les joueurs qui préfèrent le clavier).
+    this.cursors.KeyE = this.input.keyboard.addKey(Input.Keyboard.KeyCodes.E)
+    this.cursors.LShift = this.input.keyboard.addKey(Input.Keyboard.KeyCodes.SHIFT)
   }
 
   update(time, delta) {
@@ -439,14 +573,21 @@ export default class GameBrawlScene extends Scene {
         else if (this.axolotl.direction === 'left') this.lastDirectionRight = false
         this.throttledMovement()
 
-        if (Input.Keyboard.JustDown(this.cursors.space) || Input.Keyboard.JustDown(this.cursors.KeyF)) {
+        // Punch : clic droit (cf. pointerdown) ou F au clavier. Pas
+        // Space pour éviter de confondre avec le saut.
+        if (Input.Keyboard.JustDown(this.cursors.KeyF)) {
           this.doPunch()
+        }
+        // Dodge : clic gauche (cf. pointerdown) ou E / Shift au clavier.
+        if (Input.Keyboard.JustDown(this.cursors.KeyE) || Input.Keyboard.JustDown(this.cursors.LShift)) {
+          this.doDodge()
         }
       }
     }
 
     this.updateBombs(delta)
     this.updateHpBars()
+    this.updateDodgeVisuals()
     this.updateDeathOverlays()
   }
 

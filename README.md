@@ -83,12 +83,27 @@ Deux mécaniques de pression au fil du temps :
 **Égalité** : si à la fin des 60 s il n'y a pas exactement un seul
 survivant, **personne ne gagne de point** (égalité parfaite).
 
-- **Contrôles** : ← → (déplacement), Espace ou ↑ (saut), Espace tenu
-  rapide ou contact avec un adversaire (punch). Les barres de vie au-
-  dessus de chaque axolotl indiquent les PV (vert / jaune / rouge) avec
-  un repère orange pour le HpCap courant.
+- **Contrôles** :
+  - ← → : déplacement
+  - Espace ou ↑ : saut
+  - **Clic droit** (ou F) : coup de poing — halo rouge + texte "POW!"
+    en jaune. Touche les adversaires dans une hitbox 80 × 60 px dans
+    la direction face. Cooldown 500 ms.
+  - **Clic gauche** (ou E / Shift) : **esquive surf** — l'axolotl
+    devient translucide pendant 500 ms en surfant sur une vague d'eau,
+    immunisé aux coups de poing et aux bombes. Cooldown 8 s.
+- **Indicateurs** : les barres de vie au-dessus de chaque axolotl
+  indiquent les PV (vert / jaune / rouge) avec un repère orange pour le
+  HpCap courant. À droite de chaque barre, un petit cercle bleu
+  indique l'état du cooldown d'esquive (plein = prêt, arc qui se remplit
+  = en cooldown).
+- **Caméra** : dézoom 25 % pour avoir une vue large du terrain.
 - **Condition de victoire** : `Timeout` — dernier debout, sinon aucun
   vainqueur.
+
+![Bagarre — animation du coup de poing](docs/screenshots/04-game-brawl-punch.png)
+
+![Bagarre — esquive surf](docs/screenshots/04-game-brawl-dodge.png)
 
 ### Chute de pommes (Falling Apples)
 
@@ -319,7 +334,8 @@ doit être faite des deux côtés simultanément.
 
 - **CLIENT_* → serveur** : `CLIENT_CONNECTION`, `CLIENT_FOCUS`,
   `CLIENT_LOBBY_START`, `CLIENT_SCENE_BRAWL_BOMB_HIT`,
-  `CLIENT_SCENE_BRAWL_PUNCH`, `CLIENT_SCENE_FLOATING_ISLANDS_COLLIDE`,
+  `CLIENT_SCENE_BRAWL_DODGE`, `CLIENT_SCENE_BRAWL_PUNCH`,
+  `CLIENT_SCENE_FLOATING_ISLANDS_COLLIDE`,
   `CLIENT_SCENE_FLOATING_ISLANDS_FALL`, `CLIENT_SCENE_HOT_POTATO_TAG`,
   `CLIENT_SCENE_MOVEMENT`, `CLIENT_SCENE_STAR_WARS_COLLECT`, `CLIENT_WIN`.
 - **SERVER_* → clients** : `SERVER_CONNECTION`, `SERVER_COUNTDOWN`,

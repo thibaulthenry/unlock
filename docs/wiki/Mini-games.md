@@ -76,20 +76,57 @@ Tiré au sort par le serveur via `TerrainId` (0, 1 ou 2) :
 ### Packets
 
 - `CLIENT_SCENE_BRAWL_PUNCH` : `{ x, y, directionRight }` — émis quand
-  le joueur appuie sur Espace. Le serveur cherche les cibles dans une
-  hitbox depuis (x, y) en fonction de la direction et applique 1 PV de
-  dégât à chacune.
+  le joueur déclenche un coup de poing (clic droit ou F). Le serveur
+  cherche les cibles dans une hitbox depuis (x, y) en fonction de la
+  direction, ignore les joueurs en pleine esquive, et applique 1 PV de
+  dégât aux cibles restantes.
 - `CLIENT_SCENE_BRAWL_BOMB_HIT` : `{ bombKey }` — émis quand la
   collision locale entre l'axolotl du client et une bombe est détectée.
-  Le serveur supprime la bombe et applique 2 PV de dégât.
+  Le serveur supprime la bombe et applique 2 PV de dégât, sauf si le
+  joueur est en pleine esquive (la bombe est alors consommée sans
+  dégât).
+- `CLIENT_SCENE_BRAWL_DODGE` : `{}` — émis au déclenchement d'une
+  esquive (clic gauche ou E / Shift). Le serveur vérifie le cooldown
+  (8 s), marque le joueur `Dodging` pendant 500 ms, et programme un
+  timeout pour remettre le flag à false.
+
+### Contrôles
+
+- ← → : déplacement
+- Espace ou ↑ : saut
+- **Clic droit** (ou F au clavier) : coup de poing
+- **Clic gauche** (ou E / Shift au clavier) : esquive surf
+
+Le menu contextuel du navigateur est désactivé sur le canvas Phaser
+(`input.mouse.disableContextMenu()`) ainsi que sur la fenêtre (cf.
+`Game.vue`), pour que le clic droit déclenche bien le punch sans afficher
+le menu natif.
 
 ### Animation du coup de poing
 
 Au lancement d'un punch, l'axolotl effectue un petit **lunge** (tween
-horizontal yoyo de 18 px), un **cercle blanc cerclé de rouge** apparaît
-devant lui pour 280 ms en s'agrandissant et s'estompant, accompagné du
-texte « POW! » en jaune. Le serveur valide indépendamment ; le visuel
-est purement local pour le ressenti.
+horizontal yoyo de 110 ms), un **halo rouge** entoure son poing avec un
+cercle blanc cerclé de rouge au centre, et le texte « POW! » en jaune
+gras apparaît au-dessus. Le tout grossit jusqu'à 1.8× puis s'estompe sur
+700 ms. Le serveur valide indépendamment ; le visuel est purement local
+pour le ressenti.
+
+### Esquive surf
+
+Le clic gauche déclenche l'esquive : l'axolotl devient **translucide**
+(alpha 0.4) pendant 500 ms et une **vague d'eau** (deux ellipses bleues
+cyan + blanche imbriquées) apparaît sous ses pieds, animée d'un léger
+yoyo de mise à l'échelle. Pendant la fenêtre, le joueur est immunisé
+aux coups de poing (cf. `PunchableTargets` qui filtre `Dodging`) et aux
+bombes (le bomb-hit consomme la bombe sans dégât).
+
+Le serveur impose un **cooldown de 8 s** : un petit cercle bleu à
+droite de la barre de vie indique l'état. Vide quand on vient
+d'esquiver, il se remplit progressivement en arc dans le sens horaire
+jusqu'à être totalement plein quand la nouvelle esquive est disponible.
+
+Une caméra zoomée à **0.75** (dézoom 25 %) permet de voir plus de
+terrain pendant ce mini-jeu — utile pour anticiper bombes et adversaires.
 
 ## Chute de pommes (`GameFallingApples`)
 

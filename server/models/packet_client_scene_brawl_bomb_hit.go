@@ -33,7 +33,11 @@ func (packet *PacketClientSceneBrawlBombHit) Receive(client *Client) (err error)
 	}
 
 	delete(data.Bombs, packet.BombKey)
-	data.ApplyDamage(client.Uuid, 2)
+
+	// Esquive active : la bombe est consommée mais sans dégât.
+	if !data.Dodging[client.Uuid] {
+		data.ApplyDamage(client.Uuid, 2)
+	}
 
 	if err = NewPacketServerSceneData(data, constants.SceneKeyGameBrawl).Send(lobby); err != nil {
 		return err

@@ -59,10 +59,24 @@ pour éliminer un joueur qui Alt-Tab pendant la partie.
 Émis par le client participant à la Bagarre quand son axolotl entre en
 collision avec une bombe tombant du ciel. Le serveur supprime la bombe
 et inflige 2 PV de dégât à l'émetteur (et seulement à lui : un seul
-client signale par bombe).
+client signale par bombe). Si l'émetteur est en pleine esquive
+(`Dodging`), la bombe est consommée sans dégât.
 
 ```json
 { "label": "CLIENT_SCENE_BRAWL_BOMB_HIT", "bombKey": "..." }
+```
+
+### `CLIENT_SCENE_BRAWL_DODGE`
+
+Émis par le participant à la Bagarre au déclenchement de l'esquive surf
+(clic gauche, ou E / Shift au clavier). Le serveur vérifie le cooldown
+(8 s depuis la dernière esquive), marque le joueur `Dodging` pendant
+500 ms et programme un timeout serveur pour remettre le flag à false et
+rediffuser l'état. Pendant cette fenêtre, les coups de poing et bombes
+qui le visent sont annulés.
+
+```json
+{ "label": "CLIENT_SCENE_BRAWL_DODGE" }
 ```
 
 ### `CLIENT_SCENE_BRAWL_PUNCH`
