@@ -58,9 +58,16 @@ export default class GameFloatingIslandsScene extends Scene {
 
     this.freezeMovements = true
     this.islandGroup = this.physics.add.staticGroup()
-    this.axolotl.body.width = this.axolotl.body.halfWidth / 2
-    this.axolotl.body.offset.x = this.axolotl.width / 2.7
-    this.axolotl.body.onWorldBounds = true
+    // Réduit l'emprise de collision horizontale de l'axolotl (queue+pattes
+    // ne touchent plus les bords des îles). Utilise les setters canoniques
+    // setSize/setOffset au lieu d'assigner directement body.width et
+    // body.offset.x, qui sont fragiles dans certains environnements
+    // (Hardened JS / extensions wallet).
+    const halfBodyWidth = (this.axolotl.body?.halfWidth ?? 50) / 2
+    const fullBodyHeight = this.axolotl.body?.height ?? 86
+    this.axolotl.body?.setSize(halfBodyWidth, fullBodyHeight, false)
+    this.axolotl.body?.setOffset((this.axolotl.width ?? 100) / 2.7, 0)
+    if (this.axolotl.body) this.axolotl.body.onWorldBounds = true
 
     this.physics.add.collider(this.axolotl, this.islandGroup, (axolotlSprite, islandSprite) => {
       const key = islandSprite.getData('key')

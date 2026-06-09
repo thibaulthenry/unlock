@@ -23,13 +23,17 @@ const CAMERA_ZOOM = 0.75            // dézoom 25 % pour voir plus de terrain
 // Trois terrains style Smash Bros, exprimés en blocs [x, y, w, h, color].
 // La scène fait 1200×600 px et a un sol implicite supplémentaire pour
 // éviter qu'un axolotl ne tombe dans le vide hors arène.
+// Sol étendu sur toute la largeur du monde (-100 → 1300) pour qu'aucun
+// axolotl ne tombe dans le vide entre les bords de la plateforme et
+// l'enceinte. Les plateformes intermédiaires sont assez espacées pour
+// nécessiter le double-jump.
 const TERRAINS = [
   // 0. Battlefield : sol + deux mini plateformes + une au sommet.
   {
     name: 'Battlefield',
     color: 0x0e2950,
     platforms: [
-      [50, 500, 1100, 30, 0x6b4423],
+      [-100, 500, 1400, 30, 0x6b4423],
       [220, 360, 200, 18, 0x6b4423],
       [780, 360, 200, 18, 0x6b4423],
       [500, 220, 200, 18, 0x6b4423],
@@ -40,7 +44,7 @@ const TERRAINS = [
     name: 'Final Destination',
     color: 0x14082b,
     platforms: [
-      [120, 460, 960, 40, 0x3a2c8a],
+      [-100, 460, 1400, 40, 0x3a2c8a],
     ],
   },
   // 2. Stairs : escalier asymétrique, terrain incliné.
@@ -48,7 +52,7 @@ const TERRAINS = [
     name: 'Stairs',
     color: 0x0a3a2a,
     platforms: [
-      [50, 540, 1100, 30, 0x3a8a6b],
+      [-100, 540, 1400, 30, 0x3a8a6b],
       [120, 440, 280, 18, 0x3a8a6b],
       [440, 360, 280, 18, 0x3a8a6b],
       [760, 280, 280, 18, 0x3a8a6b],
@@ -64,7 +68,7 @@ export default class GameBrawlScene extends Scene {
       physics: {
         arcade: {
           debug: false,
-          gravity: { y: 800 },
+          gravity: { y: 1400 },     // gravité agressive : retombée nerveuse
         },
       },
     })
@@ -210,10 +214,14 @@ export default class GameBrawlScene extends Scene {
         store.state.client.name,
         store.state.client.spriteColor,
     )
+    this.tuneBrawlAxolotl(this.axolotl)
     this.patchAxolotlNameOffset(this.axolotl)
     this.axolotlsMap.set(store.state.client.uuid, this.axolotl)
     this.physics.add.collider(this.axolotl, this.platforms)
     this.cameras.main.startFollow(this.axolotl, true, 0.1, 0.1)
+
+    // État du double-jump local : réinitialisé à 2 à chaque atterrissage.
+    this.jumpsRemaining = 2
   }
 
   ensureRemoteAxolotl(uuid, player) {
@@ -226,9 +234,34 @@ export default class GameBrawlScene extends Scene {
         player.name,
         player.spriteColor,
     )
+    this.tuneBrawlAxolotl(sprite)
     this.patchAxolotlNameOffset(sprite)
-    this.physics.add.collider(sprite, this.platforms)
+    // Remote : pas de gravité ni de collider, la position est purement
+    // pilotée par les SERVER_SCENE_MOVEMENT (sinon le sprite local
+    // tomberait entre deux paquets serveur et ferait des yo-yo).
+    if (sprite.body) {
+      sprite.body.setAllowGravity(false)
+      sprite.body.setVelocity(0, 0)
+      sprite.body.moves = false
+    }
     this.axolotlsMap.set(uuid, sprite)
+  }
+
+  // Ajustements communs aux axolotls de la Bagarre : déplacement plus
+  // nerveux (speedFactor 1.8) et body de collision rétréci pour ne plus
+  // s'accrocher aux bords des plateformes (cause du bug de collision
+  // signalé sur la plateforme principale).
+  tuneBrawlAxolotl(sprite) {
+    if (!sprite) return
+    sprite.setSpeedFactor(1.8)
+    if (sprite.body) {
+      const w = (sprite.body.width ?? 100) * 0.55
+      const h = sprite.body.height ?? 86
+      sprite.body.setSize(w, h, false)
+      // Recadre l'offset horizontalement pour que le body reste centré
+      // sur le sprite (sinon l'axolotl glisse latéralement au touch).
+      sprite.body.setOffset((sprite.width - w) / 2, 0)
+    }
   }
 
   refreshRemoteAxolotls() {
@@ -606,6 +639,24 @@ export default class GameBrawlScene extends Scene {
         else if (this.axolotl.direction === 'left') this.lastDirectionRight = false
         this.throttledMovement()
 
+        // Double-jump : Axolotl ne traite que le saut au sol. On consomme
+        // un saut supplémentaire en l'air sur JustDown de Space.
+        const body = this.axolotl.body
+        if (body) {
+          if (body.onFloor()) {
+            this.jumpsRemaining = 2
+          } else if (Input.Keyboard.JustDown(this.cursors.space) && this.jumpsRemaining > 0 && this.jumpsRemaining < 2) {
+            body.setVelocityY(-380)
+            this.jumpsRemaining -= 1
+            this.spawnDoubleJumpPuff()
+          } else if (Input.Keyboard.JustDown(this.cursors.space) && this.jumpsRemaining === 2) {
+            // Premier saut : Axolotl l'a déjà appliqué (vélocité -250).
+            // On boost pour matcher la nervosité du jeu, et on décompte.
+            body.setVelocityY(-420)
+            this.jumpsRemaining = 1
+          }
+        }
+
         // Punch : clic droit (cf. pointerdown) ou F au clavier. Pas
         // Space pour éviter de confondre avec le saut.
         if (Input.Keyboard.JustDown(this.cursors.KeyF)) {
@@ -622,6 +673,24 @@ export default class GameBrawlScene extends Scene {
     this.updateHpBars()
     this.updateDodgeVisuals()
     this.updateDeathOverlays()
+  }
+
+  // Petit nuage circulaire sous les pattes pour souligner le 2e saut.
+  spawnDoubleJumpPuff() {
+    if (!this.axolotl || !this.axolotl.body) return
+    const cx = this.axolotl.body.x + this.axolotl.body.width / 2
+    const cy = this.axolotl.body.y + this.axolotl.body.height - 4
+    const puff = this.add.circle(cx, cy, 6, 0xffffff, 0.85)
+        .setStrokeStyle(2, 0xaad8ff)
+        .setDepth(4)
+    this.tweens.add({
+      targets: puff,
+      scaleX: 2.6,
+      scaleY: 1.4,
+      alpha: 0,
+      duration: 320,
+      onComplete: () => puff.destroy(),
+    })
   }
 
 }

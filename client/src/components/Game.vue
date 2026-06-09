@@ -210,8 +210,21 @@ export default {
     bus.$off(EventTypes.GAME_COUNTDOWN)
     bus.$off(EventTypes.LOBBY_INTERRUPT)
     bus.$off(EventTypes.TOGGLE_MUSIC_LOOP)
+    // Libère explicitement les captures clavier de Phaser AVANT destroy :
+    // sinon les KeyA/KeyD/Space/Arrow etc. enregistrés dans les scènes
+    // (Brawl, Star Wars, etc.) peuvent rester bound au document et
+    // intercepter les frappes sur la home page (impossible de taper un
+    // nouveau code de lobby).
+    if (this.game?.input?.keyboard) {
+      try { this.game.input.keyboard.clearCaptures() } catch (ignored) { /* noop */ }
+      try { this.game.input.keyboard.removeAllKeys(true, true) } catch (ignored) { /* noop */ }
+    }
     this.game.destroy(true, false)
     window.$game = null
+    // Réinitialise les inputs autorisés (sinon Keyboard.vue/Mouse.vue,
+    // s'ils se remontent avant que Phaser ait fini de set up la nouvelle
+    // scène, restent verrouillés sur la dernière configuration jouée).
+    this.$store.commit('SET_SCENE_INPUTS', { inputs: null })
   },
 }
 </script>
