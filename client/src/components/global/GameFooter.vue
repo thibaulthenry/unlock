@@ -1,6 +1,6 @@
 <template>
   <v-footer
-      color="grey-darken-2"
+      class="dungeon-footer"
       :height="minimized ? '62px' : '200px'"
   >
     <v-row no-gutters class="pa-2 flex-nowrap align-center">

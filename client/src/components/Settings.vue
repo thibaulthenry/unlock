@@ -12,25 +12,26 @@
             clearable
             variant="outlined"
             rounded
-            theme="dark"
+            theme="dungeon"
+            color="primary"
         />
       </v-row>
 
       <v-row class="d-flex flex-column ma-0 mt-8">
         <v-slider
             v-model="lobbyCapacity"
+            class="dungeon-slider"
             show-ticks="always"
             thumb-label="always"
             thumb-size="30"
-            track-color="white"
-            color="#BB8600"
+            color="primary"
             :min="2"
             :max="10"
             :step="1"
-            theme="dark"
+            theme="dungeon"
             hide-details
         />
-        <span class="text-white text-caption ml-2">
+        <span class="dungeon-subtitle text-caption ml-2">
           {{ $t('buttons.lobby.capacity') }}
         </span>
       </v-row>
@@ -38,18 +39,18 @@
       <v-row class="d-flex flex-column ma-0 mt-15">
         <v-slider
             v-model="lobbyPointsGoal"
+            class="dungeon-slider"
             show-ticks="always"
             thumb-label="always"
             thumb-size="30"
-            track-color="white"
-            color="#BB8600"
+            color="primary"
             :min="2"
             :max="20"
             :step="1"
-            theme="dark"
+            theme="dungeon"
             hide-details
         />
-        <span class="text-white text-caption ml-2">
+        <span class="dungeon-subtitle text-caption ml-2">
           {{ $t('buttons.lobby.pointsGoal') }}
         </span>
       </v-row>

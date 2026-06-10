@@ -4,11 +4,12 @@
       :color="snackbar.color"
       :timeout="6000"
       location="bottom right"
+      class="dungeon-snackbar"
   >
     <v-row class="d-flex align-baseline ma-0">
       <span class="ml-3">{{ snackbar.message }}</span>
       <v-spacer/>
-      <v-btn variant="text" @click="hide(snackbar)">Fermer</v-btn>
+      <v-btn variant="text" color="primary" @click="hide(snackbar)">Fermer</v-btn>
     </v-row>
   </v-snackbar>
 </template>

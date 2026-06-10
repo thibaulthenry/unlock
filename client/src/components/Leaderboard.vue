@@ -1,6 +1,6 @@
 <template>
-  <v-card height="100%" elevation="4" rounded theme="dark">
-    <v-card-title>
+  <v-card height="100%" elevation="0" rounded theme="dungeon" class="dungeon-card">
+    <v-card-title class="dungeon-subtitle">
       {{ $t('settings.leaderboard') }}
       <span v-if="lobby" class="text-overline ml-auto">
         <v-tooltip location="right">

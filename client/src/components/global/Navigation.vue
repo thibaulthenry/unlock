@@ -1,11 +1,12 @@
 <template>
   <v-app-bar
-      color="grey-darken-2"
+      class="dungeon-archway"
       :height="$vuetify.display.xs ? 56 : 64"
       style="z-index: 8"
+      flat
   >
     <v-row style="height: 100%" class="d-flex justify-center align-center ma-0 flex-nowrap">
-      <img :src="logo" alt="logo" class="navigation-logo"/>
+      <img :src="logo" alt="logo" class="navigation-logo dungeon-torch-glow"/>
       <LanguageSwitcher style="position: absolute; right: 0" class="mr-2"/>
     </v-row>
   </v-app-bar>

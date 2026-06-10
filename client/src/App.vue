@@ -1,13 +1,13 @@
 <template>
-  <v-app id="app" theme="dark">
+  <v-app id="app" theme="dungeon">
     <Navigation/>
 
-    <v-main style="background: #041336">
+    <v-main>
       <v-container fluid class="fill-height d-flex flex-column justify-center">
         <v-icon
-            class="drawer-button"
+            class="drawer-button dungeon-torch-glow"
             :class="{'drawer-button-active': drawer && $route.name !== 'lobbies'}"
-            :color="drawer ? '#febf04' : undefined"
+            :color="drawer ? 'primary' : 'on-background'"
             size="x-large"
             @click.self="drawer = !drawer"
         >
@@ -16,9 +16,9 @@
 
         <v-navigation-drawer
             v-model="drawer"
-            class="elevation-0"
+            class="elevation-0 dungeon-drawer"
             :width="$vuetify.display.xs ? undefined : 350"
-            theme="dark"
+            theme="dungeon"
             touchless
         >
           <Leaderboard v-if="$route.name === 'lobbies'"/>

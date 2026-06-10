@@ -50,6 +50,9 @@ const messages = {
     errors: {
       required: 'Required field',
     },
+    home: {
+      tagline: 'Step into the tomb',
+    },
     languages: {
       fr: 'French',
       gb: 'English',
@@ -153,6 +156,9 @@ const messages = {
     },
     errors: {
       required: 'Champ requis',
+    },
+    home: {
+      tagline: 'Entre dans le tombeau',
     },
     languages: {
       fr: 'Français',

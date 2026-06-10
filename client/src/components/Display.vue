@@ -1,8 +1,8 @@
 <template>
   <v-card
-      theme="dark"
+      theme="dungeon"
       :width="$vuetify.display.mobile ? '90%' : '50%'"
-      class="display-info"
+      class="display-info dungeon-card"
   >
     <v-tooltip location="top">
       <template #activator="{ props }">
@@ -95,22 +95,24 @@
       <v-btn
           v-if="client && lobby && lobby.canStart(client.uuid)"
           :loading="loadingStart"
-          color="light-green-accent-2"
-          class="ma-2"
+          class="ma-2 dungeon-btn"
           size="small"
           @click="throttleStart"
       >
+        <v-icon class="mr-1" size="small">mdi-key-variant</v-icon>
         {{ $t('buttons.lobby.start') }}
       </v-btn>
 
-      <span v-if="lobby && lobby.state === lobbyStates.STARTED && game && game.sceneKey">
+      <span
+          v-if="lobby && lobby.state === lobbyStates.STARTED && game && game.sceneKey"
+          class="dungeon-subtitle"
+      >
         {{ $t('display.names.' + game.sceneKey) }}
       </span>
 
       <v-btn
           v-if="client && lobby && lobby.state === lobbyStates.ENDED"
-          color="amber"
-          class="ma-2"
+          class="ma-2 dungeon-btn"
           size="small"
           @click="quit"
       >
@@ -202,11 +204,16 @@ export default {
 </script>
 
 <style scoped>
+/* L'ancien background-image était une texture pierre. Le thème dungeon
+ * applique déjà un dégradé grès via .dungeon-card, on garde une légère
+ * superposition de la texture du jeu pour rappeler la scène principale. */
 :deep(.display-info) {
   background-position: center !important;
   background-repeat: repeat-y !important;
-  background-image: url("../assets/images/game_background.png") !important;
-  opacity: 0.6;
+  background-blend-mode: overlay !important;
+  background-image:
+    linear-gradient(180deg, rgba(58, 40, 24, 0.95) 0%, rgba(42, 29, 18, 0.95) 100%),
+    url("../assets/images/game_background.png") !important;
 }
 
 .resize-button {

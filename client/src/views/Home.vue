@@ -4,9 +4,15 @@
     <v-row class="d-flex justify-center">
       <v-col cols="12" sm="8" md="6" lg="4" xl="3">
         <v-form ref="form" v-model="validForm" @submit.prevent="">
+          <v-row class="d-flex justify-center ma-0 mb-2">
+            <h1 class="dungeon-title text-center" :style="{fontSize: $vuetify.display.xs ? '1.4rem' : '1.8rem'}">
+              {{ $t('home.tagline') }}
+            </h1>
+          </v-row>
+
           <v-row class="d-flex justify-center ma-0">
             <v-carousel
-                class="carousel"
+                class="carousel dungeon-frame"
                 :height="carouselHeight"
                 hide-delimiters
                 cycle
@@ -19,17 +25,18 @@
             </v-carousel>
           </v-row>
 
-          <v-row justify="center" class="pa-0">
+          <v-row justify="center" class="pa-0 mt-6">
             <v-col cols="12" md="8">
               <v-btn
                   :loading="loadingJoin"
-                  :color="'#BB8600'"
-                  size="small"
+                  class="dungeon-btn"
+                  size="large"
                   block
                   type="submit"
                   @click="join"
                   @submit="join"
               >
+                <v-icon class="mr-2">mdi-key-variant</v-icon>
                 {{ $t('buttons.lobby.join') }}
               </v-btn>
             </v-col>
@@ -142,6 +149,5 @@ export default {
 .carousel {
   width: 100%;
   max-width: 350px;
-  border: 3px solid white;
 }
 </style>

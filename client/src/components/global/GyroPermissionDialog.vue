@@ -4,9 +4,9 @@
       max-width="420"
       persistent
   >
-    <v-card theme="dark">
-      <v-card-title class="d-flex align-center">
-        <v-icon class="mr-2" color="amber">mdi-rotate-3d-variant</v-icon>
+    <v-card theme="dungeon" class="dungeon-card">
+      <v-card-title class="d-flex align-center dungeon-subtitle">
+        <v-icon class="mr-2 dungeon-torch-glow" color="primary">mdi-rotate-3d-variant</v-icon>
         {{ $t('mobile.gyro.title') }}
       </v-card-title>
 
@@ -21,13 +21,12 @@
       </v-card-text>
 
       <v-card-actions class="pa-4 pt-0">
-        <v-btn variant="text" @click="decline">
+        <v-btn variant="text" color="on-surface" @click="decline">
           {{ $t('mobile.gyro.later') }}
         </v-btn>
         <v-spacer/>
         <v-btn
-            color="amber"
-            variant="elevated"
+            class="dungeon-btn"
             :loading="requesting"
             @click="accept"
         >

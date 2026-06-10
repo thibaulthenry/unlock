@@ -1,5 +1,5 @@
 <template>
-  <v-footer color="grey-darken-2" height="80px">
+  <v-footer class="dungeon-footer" height="80px">
     <v-row justify="center" no-gutters>
       <v-btn
           v-for="link in links"
@@ -7,19 +7,19 @@
           :href="link.href"
           :to="link.to"
           target="_blank"
-          color="white"
+          color="primary"
           variant="text"
           rounded
       >
         <v-icon>{{ link.icon }}</v-icon>
       </v-btn>
 
-      <v-col class="d-flex justify-center align-center text-white mt-1" cols="12">
-        <img :src="logo" alt="logo" width="35px"/>
+      <v-col class="d-flex justify-center align-center mt-1 dungeon-subtitle" cols="12">
+        <img :src="logo" alt="logo" width="35px" class="dungeon-torch-glow"/>
         <span class="ml-2 mr-2">
           {{ new Date().getFullYear() }} — <strong>4K Games</strong>
         </span>
-        <img :src="logo" alt="logo" width="35px"/>
+        <img :src="logo" alt="logo" width="35px" class="dungeon-torch-glow"/>
       </v-col>
     </v-row>
   </v-footer>
