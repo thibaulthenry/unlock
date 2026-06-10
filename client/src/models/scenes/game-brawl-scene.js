@@ -737,9 +737,17 @@ export default class GameBrawlScene extends Scene {
 
     this.interpolateRemoteAxolotls(delta)
     this.updateBombs(delta)
-    this.updateHpBars()
-    this.updateDodgeVisuals()
-    this.updateDeathOverlays()
+
+    // HUD (barres de vie + cooldown surf + KO) : 30 Hz au lieu de 60.
+    // Le `updateDodgeVisuals()` redessine un Graphics par joueur avec
+    // slice()+fillPath() à chaque appel, soit la moitié du budget frame
+    // pour 3 participants. À 30 Hz visuellement indiscernable.
+    if (!this.lastHudAt || time - this.lastHudAt >= 33) {
+      this.lastHudAt = time
+      this.updateHpBars()
+      this.updateDodgeVisuals()
+      this.updateDeathOverlays()
+    }
   }
 
   // Petit nuage circulaire sous les pattes pour souligner le 2e saut.

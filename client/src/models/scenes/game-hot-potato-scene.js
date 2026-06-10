@@ -238,20 +238,35 @@ export default class GameHotPotatoScene extends Scene {
     this.bombSprite.setPosition(x, y).setVisible(true)
     this.bombCore.setPosition(x, y).setVisible(true)
     this.bombFuse.setPosition(x, y - 22).setVisible(true)
-    this.bombText.setPosition(x + 22, y - 24)
-        .setText(String(this.delay))
-        .setVisible(this.delay > 0)
+    this.bombText.setPosition(x + 22, y - 24).setVisible(this.delay > 0)
+    // setText déclenche un re-render canvas du texte : on l'évite quand
+    // le countdown n'a pas changé (sinon : 60 re-renders/s pour rien).
+    if (this.lastBombDelay !== this.delay) {
+      this.lastBombDelay = this.delay
+      this.bombText.setText(String(this.delay))
+    }
   }
 
   updatePlayersSprites() {
-    SceneUtils.updateSprites(this.axolotlsMap, player => new Axolotl(
-        this,
-        this.spawnXFor(player.uuid),
-        450,
-        'axolotl',
-        player.name,
-        player.spriteColor,
-    ))
+    SceneUtils.updateSprites(this.axolotlsMap, player => {
+      const sprite = new Axolotl(
+          this,
+          this.spawnXFor(player.uuid),
+          450,
+          'axolotl',
+          player.name,
+          player.spriteColor,
+      )
+      // Distant : aucune physique côté client (pas de gravité, pas de
+      // collider plateforme). Sans ça la sprite tombait entre 2 SCENE_
+      // MOVEMENT et était re-snapée 20 fois/s → ressemblait à du lag.
+      if (sprite.body) {
+        sprite.body.setAllowGravity(false)
+        sprite.body.setVelocity(0, 0)
+        sprite.body.moves = false
+      }
+      return sprite
+    })
     this.children.bringToTop(this.axolotl)
     this.children.bringToTop(this.axolotl.axolotlName)
     this.children.bringToTop(this.axolotl.axolotlNameTriangle)
