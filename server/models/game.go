@@ -90,8 +90,13 @@ func (game *Game) HandleGameData(lobby *Lobby) (err error) {
 		game.AddTimeoutUuid(initUuid)
 
 		// Tick 500 ms : spawn de bombes après 30s, décroissance du HpCap
-		// dans les 15 dernières secondes, diffusion régulière de l'état.
+		// dans les 15 dernières secondes. ElapsedMillis est mis à jour à
+		// chaque tick MAIS on ne broadcast SCENE_DATA que si quelque
+		// chose de matériel a changé (nouvelle bombe, HpCap modifié) :
+		// inutile de saturer la WS et de forcer les clients à reparse
+		// 2 paquets/s alors que l'état est identique.
 		bombSpawnAccumulator := 0
+		lastBroadcastHpCap := data.HpCap
 		tickUuid := lobby.TimeoutTick(game.Duration, func() error { return nil }, 500,
 			func(startTime time.Time) error {
 				if data.Finalized {
@@ -99,6 +104,7 @@ func (game *Game) HandleGameData(lobby *Lobby) (err error) {
 				}
 				elapsed := int(time.Since(startTime).Milliseconds())
 				data.ElapsedMillis = elapsed
+				dirty := false
 
 				// Spawn bombes entre 30s et 60s, en moyenne une toutes
 				// les 1.5 s, à un x aléatoire.
@@ -107,6 +113,7 @@ func (game *Game) HandleGameData(lobby *Lobby) (err error) {
 					if bombSpawnAccumulator >= 1500 && rand.Intn(2) == 0 {
 						data.SpawnBomb()
 						bombSpawnAccumulator = 0
+						dirty = true
 					}
 				}
 
@@ -128,10 +135,19 @@ func (game *Game) HandleGameData(lobby *Lobby) (err error) {
 					if newCap < 1 {
 						newCap = 1
 					}
-					data.HpCap = newCap
-					data.ApplyHpCap()
+					if newCap != data.HpCap {
+						data.HpCap = newCap
+						data.ApplyHpCap()
+					}
+				}
+				if data.HpCap != lastBroadcastHpCap {
+					lastBroadcastHpCap = data.HpCap
+					dirty = true
 				}
 
+				if !dirty {
+					return nil
+				}
 				return NewPacketServerSceneData(data, constants.SceneKeyGameBrawl).Send(lobby)
 			})
 		game.AddTimeoutUuid(tickUuid)

@@ -53,6 +53,9 @@ export default class GameHotPotatoScene extends Scene {
     this.lastTagAttemptAt = 0
     this.holderUuid = null
     this.delay = 0
+    // Cibles d'interpolation pour les axolotls distants (lerp 80 ms
+    // au lieu d'un saut brutal à chaque SERVER_SCENE_MOVEMENT).
+    this.remoteTargets = new Map()
   }
 
   // Position de spawn déterministe basée sur l'UUID, pour que les joueurs
@@ -268,7 +271,7 @@ export default class GameHotPotatoScene extends Scene {
       case PacketLabels.SERVER_SCENE_MOVEMENT:
         new PacketServerSceneMovement(packet).receive(
             SceneKeys.GAME_HOT_POTATO,
-            p => SceneUtils.handleServerAxolotlMovement(p, this.axolotlsMap),
+            p => this.handleRemoteMovement(p),
         )
         break
       case PacketLabels.SERVER_COUNTDOWN:
@@ -294,12 +297,53 @@ export default class GameHotPotatoScene extends Scene {
     this.cursors.KeyD = this.input.keyboard.addKey(Input.Keyboard.KeyCodes.D)
   }
 
+  // Stocke la cible plutôt que d'appliquer setPosition() directement :
+  // permet de lerper sur ~80 ms dans update() et de masquer les sauts
+  // dus à la latence WebSocket (cf. Brawl).
+  handleRemoteMovement(packet) {
+    const uuid = store.state.client.uuid
+    if (!packet || packet.clientUuid === uuid) return
+    const axolotl = this.axolotlsMap.get(packet.clientUuid)
+    if (!axolotl) return
+
+    this.remoteTargets.set(packet.clientUuid, {
+      x: packet.x,
+      y: packet.y,
+      direction: packet.direction,
+      jumping: packet.jumping,
+      walking: packet.walking,
+    })
+    axolotl.playAnimations(packet.direction, packet.jumping, packet.walking)
+  }
+
+  interpolateRemoteAxolotls(delta) {
+    const blendWindow = 80
+    for (const [uuid, target] of this.remoteTargets.entries()) {
+      const axolotl = this.axolotlsMap.get(uuid)
+      if (!axolotl) {
+        this.remoteTargets.delete(uuid)
+        continue
+      }
+      const t = Math.min(1, delta / blendWindow)
+      const nx = axolotl.x + (target.x - axolotl.x) * t
+      const ny = axolotl.y + (target.y - axolotl.y) * t
+      axolotl.setPosition(nx, ny)
+      axolotl.updateNamePosition(nx, ny - 71)
+      axolotl.updateNameTrianglePosition(nx + 10, ny - 46)
+      if (Math.abs(target.x - nx) < 1 && Math.abs(target.y - ny) < 1) {
+        axolotl.setPosition(target.x, target.y)
+        this.remoteTargets.delete(uuid)
+      }
+    }
+  }
+
   update(time, delta) {
     this.axolotl.update(time, delta)
 
     this.tryTag()
     this.updateBombVisual()
     this.throttledMovement()
+    this.interpolateRemoteAxolotls(delta)
   }
 
 }

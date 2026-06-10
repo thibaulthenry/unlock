@@ -79,6 +79,13 @@ export default class GameBrawlScene extends Scene {
     this.deadOverlays = new Map()
     this.dodgeWaves = new Map()
     this.dodgeCooldowns = new Map()
+    // Bombes pour lesquelles on a déjà envoyé BOMB_HIT au serveur : on ne
+    // recrée pas le sprite tant que le serveur ne nous confirme pas la
+    // disparition (cf. ping-pong décrit dans updateBombs).
+    this.dispatchedBombHits = new Set()
+    // Cibles d'interpolation pour les axolotls distants (lissage 80 ms
+    // pour masquer la latence des SERVER_SCENE_MOVEMENT 50 ms throttlés).
+    this.remoteTargets = new Map()
     this.gameData = null
     this.delay = 0
     this.lastPunchAt = 0
@@ -422,8 +429,18 @@ export default class GameBrawlScene extends Scene {
     if (!this.gameData) return
     const serverBombs = this.gameData.bombs || {}
 
-    // Crée les nouvelles
+    // Nettoie dispatchedBombHits dès que le serveur a confirmé la
+    // suppression : sans ça, une bombe spawnée plus tard avec un nouvel
+    // uuid n'aurait pas de problème mais le Set grandirait sans limite.
+    for (const key of this.dispatchedBombHits) {
+      if (!serverBombs[key]) this.dispatchedBombHits.delete(key)
+    }
+
+    // Crée les nouvelles (sauf si on a déjà envoyé un BOMB_HIT pour : la
+    // SCENE_DATA serveur peut encore arriver avec la bombe le temps
+    // que le hit soit traité, cause du spam de collisions / latence).
     for (const [key, bomb] of Object.entries(serverBombs)) {
+      if (this.dispatchedBombHits.has(key)) continue
       if (!this.bombSprites.has(key)) {
         const visual = this.add.container(bomb.x, -40)
         const body = this.add.circle(0, 0, 14, 0x111111).setStrokeStyle(2, 0xffaa00)
@@ -453,7 +470,9 @@ export default class GameBrawlScene extends Scene {
         const dx = sprite.container.x - (this.axolotl.body.x + this.axolotl.body.width / 2)
         const dy = sprite.container.y - (this.axolotl.body.y + this.axolotl.body.height / 2)
         if (Math.sqrt(dx * dx + dy * dy) < BOMB_COLLIDE_DIST) {
-          // Émet le hit et supprime localement (le serveur supprimera aussi).
+          // Marque la bombe comme dispatched AVANT le envoi pour bloquer
+          // toute recréation dans le prochain SCENE_DATA en attente.
+          this.dispatchedBombHits.add(key)
           store.dispatch('sendPacket', new PacketClientSceneBrawlBombHit(key))
           this.flashBombExplosion(sprite.container.x, sprite.container.y)
           sprite.container.destroy()
@@ -564,6 +583,53 @@ export default class GameBrawlScene extends Scene {
     }
   }
 
+  // Reçoit une position d'axolotl distant : au lieu d'appliquer brutalement
+  // (setPosition), on stocke une cible vers laquelle on va lerper dans
+  // update() sur ~80 ms. Sans ça, chaque paquet provoque un saut visible
+  // qui ressemble à du lag, surtout quand le throttle client est à 50 ms
+  // et le RTT autour de 100 ms.
+  handleRemoteMovement(packet) {
+    const uuid = store.state.client.uuid
+    if (!packet || packet.clientUuid === uuid) return
+    const axolotl = this.axolotlsMap.get(packet.clientUuid)
+    if (!axolotl) return
+
+    this.remoteTargets.set(packet.clientUuid, {
+      x: packet.x,
+      y: packet.y,
+      receivedAt: this.time.now,
+      direction: packet.direction,
+      jumping: packet.jumping,
+      walking: packet.walking,
+    })
+    // Anime tout de suite (pose, sens) : seules les positions sont lissées.
+    axolotl.playAnimations(packet.direction, packet.jumping, packet.walking)
+  }
+
+  // Lerp progressif des axolotls distants vers leur dernière cible
+  // serveur. Fenêtre de 80 ms ≈ throttle (50 ms) + un peu de marge.
+  interpolateRemoteAxolotls(delta) {
+    const blendWindow = 80
+    for (const [uuid, target] of this.remoteTargets.entries()) {
+      const axolotl = this.axolotlsMap.get(uuid)
+      if (!axolotl) {
+        this.remoteTargets.delete(uuid)
+        continue
+      }
+      const t = Math.min(1, delta / blendWindow)
+      const nx = axolotl.x + (target.x - axolotl.x) * t
+      const ny = axolotl.y + (target.y - axolotl.y) * t
+      axolotl.setPosition(nx, ny)
+      axolotl.updateNamePosition(nx, ny - 71)
+      axolotl.updateNameTrianglePosition(nx + 10, ny - 46)
+      // On arrête le lerp quand on est à <1 px (sinon dérive infinitésimale).
+      if (Math.abs(target.x - nx) < 1 && Math.abs(target.y - ny) < 1) {
+        axolotl.setPosition(target.x, target.y)
+        this.remoteTargets.delete(uuid)
+      }
+    }
+  }
+
   broadcastMovement() {
     if (!this.iAmParticipant || !this.axolotl) return
     const coords = this.axolotl.getChangedCoordinates()
@@ -592,7 +658,7 @@ export default class GameBrawlScene extends Scene {
       case PacketLabels.SERVER_SCENE_MOVEMENT:
         new PacketServerSceneMovement(packet).receive(
             SceneKeys.GAME_BRAWL,
-            p => SceneUtils.handleServerAxolotlMovement(p, this.axolotlsMap),
+            p => this.handleRemoteMovement(p),
         )
         break
       case PacketLabels.SERVER_COUNTDOWN:
@@ -669,6 +735,7 @@ export default class GameBrawlScene extends Scene {
       }
     }
 
+    this.interpolateRemoteAxolotls(delta)
     this.updateBombs(delta)
     this.updateHpBars()
     this.updateDodgeVisuals()
