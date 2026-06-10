@@ -1,7 +1,26 @@
+import PacketLabels from '../../constants/packet-labels'
 import SpriteColors from '../../constants/sprite-colors'
 import store from '../../services/store'
 
+const STORE_HANDLED_LABELS = new Set([
+  PacketLabels.SERVER_CONNECTION,
+  PacketLabels.SERVER_COUNTDOWN,
+  PacketLabels.SERVER_GAME_START,
+  PacketLabels.SERVER_GAME_WAIT,
+  PacketLabels.SERVER_LOBBY_END,
+  PacketLabels.SERVER_LOBBY_INTERRUPT
+])
+
 export default {
+  dispatchStorePacket(packet) {
+    // High-rate packets (movements, scene data) are ignored by the store:
+    // skipping the Vuex dispatch for them avoids one action per frame per player
+    if (packet && STORE_HANDLED_LABELS.has(packet.label)) {
+      // noinspection JSIgnoredPromiseFromCall
+      store.dispatch('handlePacket', packet)
+    }
+  },
+
   createBackground(scene, key, texture, count, scrollFactorX, scrollFactorY, depth) {
     this.createBackgroundPositioned(scene, scene.scale.height, key, texture, count, scrollFactorX, scrollFactorY, depth)
   },
@@ -48,14 +67,27 @@ export default {
   handleServerAxolotlMovement(packet, axolotlsMap) {
     const uuid = store.state.client.uuid
 
-    for (let [clientUuid, axolotl] of axolotlsMap.entries()) {
-      if (packet.clientUuid !== uuid && packet.clientUuid === clientUuid) {
-        axolotl.setPosition(packet.x, packet.y)
-        axolotl.updateNamePosition(packet.x, packet.y - 71)
-        axolotl.updateNameTrianglePosition(packet.x + 10, packet.y - 46)
-        axolotl.playAnimations(packet.direction, packet.jumping, packet.walking)
-      }
+    if (packet.clientUuid === uuid) {
+      return
     }
+
+    const axolotl = axolotlsMap.get(packet.clientUuid)
+
+    if (!axolotl) {
+      return
+    }
+
+    axolotl.setPosition(packet.x, packet.y)
+
+    // Movements are throttled on the sender side: keep the remote sprite
+    // moving between two packets by replaying its last known velocity
+    if (axolotl.body) {
+      axolotl.body.setVelocity(packet.vx ?? 0, packet.vy ?? 0)
+    }
+
+    axolotl.updateNamePosition(packet.x, packet.y - 71)
+    axolotl.updateNameTrianglePosition(packet.x + 10, packet.y - 46)
+    axolotl.playAnimations(packet.direction, packet.jumping, packet.walking)
   },
 
   loadBackgroundPreGame(scene) {
@@ -73,6 +105,22 @@ export default {
     scene.load.image('dungeon-sky', '../assets/scenes/pre-game/sky.png')
     scene.load.image('dungeon-sign', '../assets/sprites/signs/sign.png')
     scene.load.image('dungeon-wall', '../assets/scenes/pre-game/wall.png')
+  },
+
+  // Limits movement packets to one every `interval` ms instead of one per
+  // frame, while guaranteeing a trailing packet with the final position
+  shouldSendMovement(scene, time, changed, interval = 50) {
+    if (changed) {
+      scene.movementDirty = true
+    }
+
+    if (scene.movementDirty && (!scene.lastMovementTime || time - scene.lastMovementTime >= interval)) {
+      scene.movementDirty = false
+      scene.lastMovementTime = time
+      return true
+    }
+
+    return false
   },
 
   preloadAxolotls(scene) {

@@ -12,6 +12,7 @@ import store from '../../services/store'
 
 export default class GameStarWarsScene extends Scene {
 
+  collectedStars = new Set()
   spaceshipMap = new Map()
   starMap = new Map()
 
@@ -55,8 +56,23 @@ export default class GameStarWarsScene extends Scene {
     this.noMotion = {direction: false, jumping: false, walking: false}
 
     this.physics.world.addOverlap(this.spaceship, this.starGroup, (spaceshipGameObject, starGameObject) => {
+      const starUuid = starGameObject.getData('uuid')
+
+      // The overlap fires on every frame: collect the star once, hide it
+      // immediately and let the server scene data confirm its removal
+      if (this.collectedStars.has(starUuid)) {
+        return
+      }
+
+      this.collectedStars.add(starUuid)
+      starGameObject.setVisible(false)
+
+      if (starGameObject.body) {
+        starGameObject.body.checkCollision.none = true
+      }
+
       // noinspection JSIgnoredPromiseFromCall
-      store.dispatch('sendPacket', new PacketClientSceneStarWarsCollect(starGameObject.getData('uuid')))
+      store.dispatch('sendPacket', new PacketClientSceneStarWarsCollect(starUuid))
     })
 
     // Camera
@@ -78,7 +94,7 @@ export default class GameStarWarsScene extends Scene {
     this.time.addEvent({
       callback: this.updateSpaceshipStarCount,
       callbackScope: this,
-      delay: 50,
+      delay: 500,
       loop: true,
       paused: false
     })
@@ -90,14 +106,16 @@ export default class GameStarWarsScene extends Scene {
   }
 
   handlePacket(packet) {
-    // noinspection JSIgnoredPromiseFromCall
-    store.dispatch('handlePacket', packet)
+    SceneUtils.dispatchStorePacket(packet)
 
     switch (packet.label) {
       case PacketLabels.SERVER_SCENE_DATA:
         new PacketServerSceneData(packet).receive(
             SceneKeys.GAME_STAR_WARS,
-            packet => this.updateStarSprites(packet)
+            packet => {
+              this.updateStarSprites(packet)
+              this.updatePoints(packet)
+            }
         )
         break
       case PacketLabels.SERVER_SCENE_MOVEMENT:
@@ -110,17 +128,30 @@ export default class GameStarWarsScene extends Scene {
   }
 
   handleSpaceshipMovement(packet) {
-    const uuid = store.state.client.uuid
-
-    for (let [clientUuid, spaceship] of this.spaceshipMap.entries()) {
-      if (packet.clientUuid !== uuid && packet.clientUuid === clientUuid) {
-        spaceship.setPosition(packet.x, packet.y)
-        spaceship.setRotation(packet.r)
-        spaceship.updateNamePosition(packet.x - 1, packet.y - 46)
-        spaceship.updateNameTrianglePosition(packet.x + 8, packet.y - 20)
-        spaceship.updateStarCountPosition(packet.x, packet.y - 66)
-      }
+    if (packet.clientUuid === store.state.client.uuid) {
+      return
     }
+
+    const spaceship = this.spaceshipMap.get(packet.clientUuid)
+
+    if (!spaceship) {
+      return
+    }
+
+    spaceship.setPosition(packet.x, packet.y)
+    spaceship.setRotation(packet.r)
+
+    // Movements are throttled on the sender side: keep the remote spaceship
+    // moving between two packets by replaying its last known velocity
+    if (spaceship.body) {
+      spaceship.body.setVelocity(packet.vx ?? 0, packet.vy ?? 0)
+      spaceship.body.setAngularVelocity(0)
+      spaceship.body.setAcceleration(0, 0)
+    }
+
+    spaceship.updateNamePosition(packet.x - 1, packet.y - 46)
+    spaceship.updateNameTrianglePosition(packet.x + 8, packet.y - 20)
+    spaceship.updateStarCountPosition(packet.x, packet.y - 66)
   }
 
   preload() {
@@ -171,11 +202,9 @@ export default class GameStarWarsScene extends Scene {
   update(time, delta) {
     this.spaceship.update(time, delta)
 
-    this.spaceshipCoordinates = this.spaceship.getChangedCoordinates();
-
-    if (this.spaceshipCoordinates) {
+    if (SceneUtils.shouldSendMovement(this, time, this.spaceship.getChangedCoordinates())) {
       // noinspection JSIgnoredPromiseFromCall
-      store.dispatch('sendPacket', new PacketClientSceneMovement(this.spaceshipCoordinates, this.noMotion, SceneKeys.GAME_STAR_WARS))
+      store.dispatch('sendPacket', new PacketClientSceneMovement(this.spaceship.getCoordinates(), this.noMotion, SceneKeys.GAME_STAR_WARS))
     }
   }
 
@@ -198,12 +227,22 @@ export default class GameStarWarsScene extends Scene {
     this.children.bringToTop(this.spaceship.spaceshipName)
   }
 
+  updatePoints(packet) {
+    if (packet && packet.data && packet.data.points) {
+      this.applyPoints(packet.data.points)
+    }
+  }
+
   updateSpaceshipStarCount() {
     if (!(store.state.game && store.state.game.data && store.state.game.data.points)) {
       return
     }
 
-    Object.entries(store.state.game.data.points).forEach(([key, value]) => {
+    this.applyPoints(store.state.game.data.points)
+  }
+
+  applyPoints(points) {
+    Object.entries(points).forEach(([key, value]) => {
       if (this.spaceshipMap.has(key)) {
         this.spaceshipMap.get(key).updateStarCount(value)
       }

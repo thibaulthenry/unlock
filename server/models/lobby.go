@@ -9,6 +9,7 @@ import (
 	"reflect"
 	"strconv"
 	"sync"
+	"sync/atomic"
 	"time"
 	"unlock/constants"
 	"unlock/firestore"
@@ -21,6 +22,8 @@ type Lobby struct {
 	Code                     string                  `json:"code" firestore:"code"`
 	ConnectionPoolRepository *LobbyRepository        `json:"-" firestore:"-"`
 	CurrentGameUuid          string                  `json:"currentGameUuid" firestore:"currentGameUuid"`
+	Done                     chan struct{}           `json:"-" firestore:"-"`
+	FirestoreDirty           int32                   `json:"-" firestore:"-"`
 	Games                    map[string]*Game        `json:"games" firestore:"games"`
 	Interrupt                chan bool               `json:"-" firestore:"-"`
 	InterruptTimeouts        map[string]chan bool    `json:"-" firestore:"-"`
@@ -110,6 +113,7 @@ func (lobby *Lobby) init(connectionPoolRepository *LobbyRepository) {
 	lobby.Broadcast = make(chan []byte, 128)
 	lobby.Clients = make(map[string]*Client)
 	lobby.ConnectionPoolRepository = connectionPoolRepository
+	lobby.Done = make(chan struct{})
 	lobby.Games = make(map[string]*Game)
 	lobby.Interrupt = make(chan bool, 8)
 	lobby.InterruptTimeouts = make(map[string]chan bool)
@@ -118,6 +122,34 @@ func (lobby *Lobby) init(connectionPoolRepository *LobbyRepository) {
 	lobby.RemainingSpriteColors = make([]constants.SpriteColor, 10)
 	copy(lobby.RemainingSpriteColors, constants.SpriteColors)
 	lobby.Unregister = make(chan *Client, 32)
+
+	go lobby.flushToFirestore()
+}
+
+// MarkFirestoreDirty schedules an asynchronous, throttled push of the lobby to
+// Firestore instead of a blocking write in the websocket read goroutine.
+func (lobby *Lobby) MarkFirestoreDirty() {
+	atomic.StoreInt32(&lobby.FirestoreDirty, 1)
+}
+
+func (lobby *Lobby) flushToFirestore() {
+	ticker := time.NewTicker(500 * time.Millisecond)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-lobby.Done:
+			return
+
+		case <-ticker.C:
+			if atomic.CompareAndSwapInt32(&lobby.FirestoreDirty, 1, 0) {
+				err := lobby.PushToFirestore()
+				if err != nil {
+					log.Println(err)
+				}
+			}
+		}
+	}
 }
 
 func (lobby *Lobby) InterruptAllTimeouts() {
@@ -175,6 +207,7 @@ func (lobby *Lobby) start() {
 
 		lobby.InterruptAllTimeouts()
 
+		close(lobby.Done)
 		close(lobby.Broadcast)
 		close(lobby.Interrupt)
 		close(lobby.Register)

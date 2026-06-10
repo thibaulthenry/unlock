@@ -88,8 +88,7 @@ export default class PreGameScene extends Scene {
   }
 
   handlePacket(packet) {
-    // noinspection JSIgnoredPromiseFromCall
-    store.dispatch('handlePacket', packet)
+    SceneUtils.dispatchStorePacket(packet)
 
     switch (packet.label) {
       case PacketLabels.SERVER_SCENE_MOVEMENT:
@@ -136,11 +135,9 @@ export default class PreGameScene extends Scene {
   update(time, delta) {
     this.axolotl.update(time, delta)
 
-    this.axolotlCoordinates = this.axolotl.getChangedCoordinates()
-
-    if (this.axolotlCoordinates) {
+    if (SceneUtils.shouldSendMovement(this, time, this.axolotl.getChangedCoordinates())) {
       // noinspection JSIgnoredPromiseFromCall
-      store.dispatch('sendPacket', new PacketClientSceneMovement(this.axolotlCoordinates, this.axolotl.getMotion(), SceneKeys.PRE_GAME))
+      store.dispatch('sendPacket', new PacketClientSceneMovement(this.axolotl.getCoordinates(), this.axolotl.getMotion(), SceneKeys.PRE_GAME))
     }
   }
 

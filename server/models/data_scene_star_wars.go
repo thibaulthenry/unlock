@@ -23,9 +23,9 @@ func NewDataSceneStarWars() *DataSceneStarWars {
 	}
 }
 
-func (data *DataSceneStarWars) CollectStar(client *Client, uuid string) {
+func (data *DataSceneStarWars) CollectStar(client *Client, uuid string) (collected bool) {
 	if _, exists := data.Stars[uuid]; !exists {
-		return
+		return false
 	}
 
 	delete(data.Stars, uuid)
@@ -36,6 +36,8 @@ func (data *DataSceneStarWars) CollectStar(client *Client, uuid string) {
 	}
 
 	data.Points[client.Uuid] = points + 1
+
+	return true
 }
 
 func (data *DataSceneStarWars) CreateStar() {

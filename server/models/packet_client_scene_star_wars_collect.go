@@ -21,7 +21,12 @@ func (packet *PacketClientSceneStarWarsCollect) Receive(client *Client) (err err
 	switch game.Data.(type) {
 	case *DataSceneStarWars:
 		data := game.Data.(*DataSceneStarWars)
-		data.CollectStar(client, packet.StarUuid)
+
+		// Overlap callbacks can flood the server with duplicate collect
+		// packets: only rebroadcast the scene when a star was really removed.
+		if !data.CollectStar(client, packet.StarUuid) {
+			return nil
+		}
 
 		err = NewPacketServerSceneData(data, constants.SceneKeyGameStarWars).Send(lobby)
 		if err != nil {

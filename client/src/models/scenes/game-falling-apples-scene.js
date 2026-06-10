@@ -76,8 +76,7 @@ export default class GameFallingApplesScene extends Scene {
   }
 
   handlePacket(packet) {
-    // noinspection JSIgnoredPromiseFromCall
-    store.dispatch('handlePacket', packet)
+    SceneUtils.dispatchStorePacket(packet)
   }
 
   preload() {

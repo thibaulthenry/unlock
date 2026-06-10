@@ -33,5 +33,7 @@ func (packet *PacketServerSceneData) Send(lobby *Lobby) (err error) {
 		lobby.Broadcast <- payload
 	}
 
-	return lobby.PushToFirestore()
+	lobby.MarkFirestoreDirty()
+
+	return nil
 }

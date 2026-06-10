@@ -198,7 +198,10 @@ export default {
         autoCenter: Phaser.Scale.CENTER_BOTH,
       },
       resizeInterval: 10,
-      antialias: true
+      antialias: true,
+      render: {
+        powerPreference: 'high-performance'
+      }
     })
 
     this.game.events.on('visible', () => this.changeFocusState(true))

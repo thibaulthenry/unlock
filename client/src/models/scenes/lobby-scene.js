@@ -87,8 +87,7 @@ export default class LobbyScene extends Scene {
   }
 
   handlePacket(packet) {
-    // noinspection JSIgnoredPromiseFromCall
-    store.dispatch('handlePacket', packet)
+    SceneUtils.dispatchStorePacket(packet)
 
     switch (packet.label) {
       case PacketLabels.SERVER_LOBBY_COLLAPSE:
@@ -152,11 +151,9 @@ export default class LobbyScene extends Scene {
   update(time, delta) {
     this.axolotl.update(time, delta)
 
-    this.axolotlCoordinates = this.axolotl.getChangedCoordinates();
-
-    if (this.axolotlCoordinates) {
+    if (SceneUtils.shouldSendMovement(this, time, this.axolotl.getChangedCoordinates())) {
       // noinspection JSIgnoredPromiseFromCall
-      store.dispatch('sendPacket', new PacketClientSceneMovement(this.axolotlCoordinates, this.axolotl.getMotion(), SceneKeys.LOBBY))
+      store.dispatch('sendPacket', new PacketClientSceneMovement(this.axolotl.getCoordinates(), this.axolotl.getMotion(), SceneKeys.LOBBY))
     }
 
     if (this.freezeMovements) {

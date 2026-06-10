@@ -111,8 +111,7 @@ export default class GameSpaceVegetablesScene extends Scene {
   }
 
   handlePacket(packet) {
-    // noinspection JSIgnoredPromiseFromCall
-    store.dispatch('handlePacket', packet)
+    SceneUtils.dispatchStorePacket(packet)
   }
 
   locateFromMiddle(x) {

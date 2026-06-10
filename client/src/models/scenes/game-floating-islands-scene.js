@@ -15,6 +15,7 @@ export default class GameFloatingIslandsScene extends Scene {
 
   axolotlMap = new Map()
   built = false
+  islandCollideSentMap = new Map()
   islandStateMap = new Map()
   islandMap = new Map()
   lost = false
@@ -64,6 +65,18 @@ export default class GameFloatingIslandsScene extends Scene {
       const key = islandSprite.getData('key')
 
       if (axolotlSprite.y < islandSprite.y - axolotlSprite.body.halfHeight) {
+        // The collider fires on every frame while standing on an island:
+        // one packet every 250ms is enough, the server ignores extra ones
+        // anyway while the island state update is pending
+        const now = this.time.now
+        const lastSent = this.islandCollideSentMap.get(key)
+
+        if (lastSent && now - lastSent < 250) {
+          return
+        }
+
+        this.islandCollideSentMap.set(key, now)
+
         // noinspection JSIgnoredPromiseFromCall
         store.dispatch('sendPacket', new PacketClientSceneFloatingIslandsCollide(key))
       }
@@ -136,10 +149,10 @@ export default class GameFloatingIslandsScene extends Scene {
 
     const buildDelay = 25
 
-    this.time.addEvent({
-      args: [packetArray],
-      callback: (packetArray) => {
+    const buildEvent = this.time.addEvent({
+      callback: () => {
         if (packetArray.length === 0) {
+          buildEvent.remove()
           return
         }
 
@@ -153,8 +166,7 @@ export default class GameFloatingIslandsScene extends Scene {
       },
       callbackScope: this,
       delay: buildDelay,
-      loop: true,
-      repeatCount: packetArray.length
+      loop: true
     })
 
     this.time.delayedCall(
@@ -173,8 +185,7 @@ export default class GameFloatingIslandsScene extends Scene {
   }
 
   handlePacket(packet) {
-    // noinspection JSIgnoredPromiseFromCall
-    store.dispatch('handlePacket', packet)
+    SceneUtils.dispatchStorePacket(packet)
 
     switch (packet.label) {
       case PacketLabels.SERVER_SCENE_DATA:
@@ -280,11 +291,9 @@ export default class GameFloatingIslandsScene extends Scene {
 
     this.axolotl.update(time, delta)
 
-    this.axolotlCoordinates = this.axolotl.getChangedCoordinates()
-
-    if (this.axolotlCoordinates) {
+    if (SceneUtils.shouldSendMovement(this, time, this.axolotl.getChangedCoordinates())) {
       // noinspection JSIgnoredPromiseFromCall
-      store.dispatch('sendPacket', new PacketClientSceneMovement(this.axolotlCoordinates, this.axolotl.getMotion(), SceneKeys.GAME_FLOATING_ISLANDS))
+      store.dispatch('sendPacket', new PacketClientSceneMovement(this.axolotl.getCoordinates(), this.axolotl.getMotion(), SceneKeys.GAME_FLOATING_ISLANDS))
     }
   }
 
