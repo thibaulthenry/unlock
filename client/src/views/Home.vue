@@ -6,7 +6,7 @@
           <v-row class="d-flex justify-center ma-0">
             <v-carousel
                 class="carousel"
-                height="350px"
+                :height="carouselHeight"
                 hide-delimiters
                 cycle
             >
@@ -80,6 +80,14 @@ export default {
     }
   },
 
+  computed: {
+    // Sur petit écran, on shrink le carousel pour laisser de la place
+    // au bouton "Rejoindre" et au champ code sans scroll.
+    carouselHeight() {
+      return this.$vuetify.display.xs ? '220px' : '350px'
+    },
+  },
+
   methods: {
     async join() {
       await this.$refs.form.validate()
@@ -116,7 +124,8 @@ export default {
 
 <style scoped>
 .carousel {
-  width: 350px;
+  width: 100%;
+  max-width: 350px;
   border: 3px solid white;
 }
 </style>

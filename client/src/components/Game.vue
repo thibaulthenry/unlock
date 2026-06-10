@@ -255,17 +255,22 @@ export default {
   user-select: none;
 }
 
+/* Le canvas reste carré et fixe en ratio, mais on clampe sa taille au
+ * minimum entre la viewport height et la viewport width : sur portrait
+ * mobile (iPhone SE 375×667) un width de 60vh = 400 px débordait
+ * horizontalement. min(60vh, 90vw) garantit qu'on tient toujours dans
+ * l'écran tout en restant carré. */
 #countdown-container {
   transition: width 1s;
   box-sizing: content-box;
-  width: 45vh;
+  width: min(45vh, 90vw);
   height: 50px;
   padding-left: 18px;
   padding-right: 18px;
 }
 
 .countdown-container-maximized {
-  width: 60vh !important;
+  width: min(60vh, 90vw) !important;
 }
 
 #game-wrap {
@@ -274,13 +279,13 @@ export default {
 
 #game-container {
   transition: width 1s, height 1s;
-  width: 45vh;
-  height: 45vh;
+  width: min(45vh, 90vw);
+  height: min(45vh, 90vw);
 }
 
 .game-container-maximized {
-  width: 60vh !important;
-  height: 60vh !important;
+  width: min(60vh, 90vw) !important;
+  height: min(60vh, 90vw) !important;
 }
 
 :deep(.v-progress-linear) {

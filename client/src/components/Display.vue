@@ -48,9 +48,8 @@
     </v-tooltip>
 
     <v-card-title
-        class="d-flex justify-center font-italic pt-2"
+        class="d-flex justify-center font-italic pt-2 text-center display-title"
         :class="$vuetify.display.xs ? 'mt-8' : undefined"
-        style="font-size: 18px"
     >
       <span v-if="lobby && lobby.state === lobbyStates.PENDING">
         {{ $t('lobby.states.pending') }}
@@ -233,5 +232,14 @@ export default {
 
 .quit-button:hover {
   cursor: pointer;
+}
+
+/* Titre du Display : clamp fluide entre 14 px (très petit écran) et
+ * 18 px (desktop), évite à la fois la troncature mobile et l'aspect
+ * minuscule sur grand écran. */
+.display-title {
+  font-size: clamp(14px, 3.4vw, 18px);
+  line-height: 1.25;
+  word-break: break-word;
 }
 </style>

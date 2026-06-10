@@ -3,10 +3,10 @@
       color="grey-darken-2"
       :height="minimized ? '62px' : '200px'"
   >
-    <v-row no-gutters class="pa-2">
+    <v-row no-gutters class="pa-2 flex-nowrap align-center">
       <Mouse
           v-if="!$vuetify.display.mobile"
-          style="width: 220px; opacity: 1; transition: opacity 1s"
+          class="footer-input"
           :class="minimized ? 'inputs-hidden' : undefined"
       />
 
@@ -18,7 +18,7 @@
 
       <Keyboard
           v-if="!$vuetify.display.mobile"
-          style="width: 220px; opacity: 1; transition: opacity 1s"
+          class="footer-input"
           :class="minimized ? 'inputs-hidden' : undefined"
       />
     </v-row>
@@ -47,5 +47,15 @@ export default {
 
 .inputs-hidden {
   opacity: 0 !important;
+}
+
+/* Largeur fluide pour les indicateurs Mouse/Keyboard : 220 px sur grand
+ * écran, mais on shrink jusqu'à 140 px en sm/md pour ne pas écraser la
+ * carte Display centrale (qui prend 50 % de la largeur). */
+.footer-input {
+  width: clamp(140px, 18vw, 220px);
+  opacity: 1;
+  transition: opacity 1s;
+  flex-shrink: 0;
 }
 </style>

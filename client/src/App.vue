@@ -82,11 +82,21 @@ html::-webkit-scrollbar {
   overflow: hidden;
 }
 
+/* Le bouton "drawer" doit rester à l'intérieur de la navbar : la navbar
+ * passe de 64 px (≥ sm) à 56 px (xs), donc on centre verticalement sur
+ * sa hauteur avec calc plutôt qu'un top fixe en px qui collait au logo
+ * sur mobile. */
 .drawer-button {
   position: fixed !important;
   left: 10px;
-  top: 12px;
+  top: calc((var(--v-layout-top, 64px) - 32px) / 2);
   z-index: 9;
+}
+
+@media (max-width: 599px) {
+  .drawer-button {
+    top: calc((56px - 32px) / 2);
+  }
 }
 
 .drawer-button-active {
