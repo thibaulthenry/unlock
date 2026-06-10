@@ -41,6 +41,8 @@
 import bus from '@/services/event-bus'
 import EndScene from '@/models/scenes/end-scene'
 import EventTypes from '@/constants/event-types'
+import { getGyroControls } from '@/services/gyro-controls'
+import GyroControls from '@/services/gyro-controls'
 import GameBrawlScene from '@/models/scenes/game-brawl-scene'
 import GameFallingApplesScene from '@/models/scenes/game-falling-apples-scene'
 import GameFloatingIslandsScene from '@/models/scenes/game-floating-islands-scene'
@@ -200,9 +202,22 @@ export default {
     // L'instance Phaser est exposée globalement pour les composants
     // qui en ont besoin (clavier virtuel, souris). Voir main.js.
     window.$game = this.game
+
+    // Gyro mobile : on active uniquement si l'utilisateur l'a autorisé
+    // sur la home. La permission iOS reste valide pour la session, donc
+    // pas de nouvelle requestPermission ici tant que la page n'est pas
+    // rechargée.
+    if (GyroControls.getPreference() === 'enabled' && GyroControls.isSupported()) {
+      this.gyro = getGyroControls()
+      this.gyro.enable(document.getElementById('game-container'))
+    }
   },
 
   beforeUnmount() {
+    if (this.gyro) {
+      this.gyro.disable()
+      this.gyro = null
+    }
     this.resetMusicLoop()
     this.$window.removeEventListener('contextmenu', this.preventRightClick)
     this.$document.removeEventListener('visibilitychange', this.handleVisibilityChange)

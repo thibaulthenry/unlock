@@ -54,6 +54,19 @@ const messages = {
       fr: 'French',
       gb: 'English',
     },
+    mobile: {
+      gyro: {
+        title: 'Play with the gyroscope',
+        description: 'Tilt your phone to move and use these gestures during the game:',
+        controlsTilt: 'Tilt left / right → move',
+        controlsShake: 'Shake the phone → jump',
+        controlsTap: 'Tap the screen → punch (in Brawl)',
+        controlsDoubleTap: 'Double tap → dodge (in Brawl)',
+        enable: 'Enable',
+        later: 'Not now',
+        permissionDenied: 'Motion sensors permission denied',
+      },
+    },
     lobby: {
       states: {
         pending: 'Waiting additional players',
@@ -144,6 +157,19 @@ const messages = {
     languages: {
       fr: 'Français',
       gb: 'Anglais',
+    },
+    mobile: {
+      gyro: {
+        title: 'Jouer avec le gyroscope',
+        description: 'Incline ton téléphone pour bouger et utilise ces gestes pendant le jeu :',
+        controlsTilt: 'Inclinaison gauche / droite → déplacement',
+        controlsShake: 'Secousse → saut',
+        controlsTap: 'Tap sur l\'écran → coup de poing (en Bagarre)',
+        controlsDoubleTap: 'Double tap → esquive (en Bagarre)',
+        enable: 'Activer',
+        later: 'Plus tard',
+        permissionDenied: 'Accès aux capteurs de mouvement refusé',
+      },
     },
     lobby: {
       states: {

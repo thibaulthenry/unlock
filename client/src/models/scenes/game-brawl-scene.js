@@ -112,6 +112,11 @@ export default class GameBrawlScene extends Scene {
     // preventRightClick sur window.)
     this.input.mouse.disableContextMenu()
     this.input.on('pointerdown', (pointer) => {
+      // Mode mobile gyro actif : le tap est géré par gyro-controls.js
+      // (tap = punch via KeyF, double tap = dodge via KeyE). On évite
+      // donc de doubler l'action ici sinon un tap déclencherait à la
+      // fois punch ET dodge.
+      if (window.__gyroActive) return
       // pointer.button : 0 = gauche, 1 = milieu, 2 = droit (plus fiable
       // que rightButtonDown() qui interroge l'état courant des boutons).
       if (pointer.button === 2) {

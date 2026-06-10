@@ -1,5 +1,6 @@
 <template>
   <v-container fluid class="fill-height pa-0">
+    <GyroPermissionDialog v-model="showGyroDialog"/>
     <v-row class="d-flex justify-center">
       <v-col cols="12" sm="8" md="6" lg="4" xl="3">
         <v-form ref="form" v-model="validForm" @submit.prevent="">
@@ -58,10 +59,14 @@
 
 <script>
 import { doc, getDoc } from 'firebase/firestore'
+import GyroControls from '@/services/gyro-controls'
+import GyroPermissionDialog from '@/components/global/GyroPermissionDialog.vue'
 import Lobby from '../models/data/lobby'
 import { firestore } from '@/services/firebase'
 
 export default {
+  components: { GyroPermissionDialog },
+
   data() {
     const bucket = import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || 'unlock-db.appspot.com'
     const carouselUrl = name => `https://firebasestorage.googleapis.com/v0/b/${bucket}/o/games%2F${name}.png?alt=media`
@@ -77,6 +82,7 @@ export default {
       loadingSpectate: false,
       lobbyCode: null,
       validForm: false,
+      showGyroDialog: false,
     }
   },
 
@@ -118,6 +124,16 @@ export default {
     lobbyCode() {
       this.lobbyCode = typeof this.lobbyCode === 'string' ? this.lobbyCode.toLowerCase() : this.lobbyCode
     }
+  },
+
+  mounted() {
+    // Première visite mobile : on propose d'activer le gyroscope. La
+    // permission iOS exige un gesture utilisateur, donc on ne peut pas
+    // l'auto-demander — uniquement informer via la modale.
+    const shouldPrompt = this.$vuetify.display.mobile
+        && GyroControls.isSupported()
+        && GyroControls.getPreference() === null
+    if (shouldPrompt) this.showGyroDialog = true
   },
 }
 </script>
