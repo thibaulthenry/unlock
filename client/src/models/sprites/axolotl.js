@@ -4,7 +4,7 @@ import SpriteDirections from '../../constants/sprite-directions'
 
 export default class Axolotl extends GameObjects.Sprite {
 
-  constructor(scene, x, y, key, name, color, noGravity, avoidBounds) {
+  constructor(scene, x, y, key, name, color, noGravity, avoidBounds, zoom = 1) {
     super(scene, x, y, `${key}-${color}`)
 
     scene.physics.world.enable(this)
@@ -18,6 +18,8 @@ export default class Axolotl extends GameObjects.Sprite {
       this.body.collideWorldBounds = true
     }
 
+    this.speedFactor = 1
+    this.zoom = zoom
     this.color = color
     this.coordinates = this.getCoordinates()
     this.cursors = scene.cursors
@@ -30,9 +32,17 @@ export default class Axolotl extends GameObjects.Sprite {
         .setOrigin(0.5, 0.5)
         .setVisible(false)
 
+    if (zoom !== 1) {
+      this.axolotlName.setScale(1 + 0.5 * zoom)
+    }
+
     this.axolotlNameTriangle = this.scene.add.triangle(x + 50, y - 8, -8, -8, 8, -8, 0, 0, SpriteColorCodes[color].hex)
         .setOrigin(0.5, 0.5)
         .setVisible(false)
+  }
+
+  setSpeedFactor(factor) {
+    this.speedFactor = factor
   }
 
   createAxolotlAnimations() {
@@ -73,6 +83,40 @@ export default class Axolotl extends GameObjects.Sprite {
       frames: this.anims.generateFrameNumbers(`axolotl-${this.color}`, {start: 7, end: 7}),
       frameRate: 6,
     })
+
+    // Frames de coup de poing (8 : droite, 9 : gauche), générées par
+    // scripts/generate-sprites.py dans les cellules ajoutées au sheet.
+    this.anims.create({
+      key: `axolotl-${this.color}-punch-${SpriteDirections.RIGHT}`,
+      frames: this.anims.generateFrameNumbers(`axolotl-${this.color}`, {start: 8, end: 8}),
+      frameRate: 1,
+    })
+
+    this.anims.create({
+      key: `axolotl-${this.color}-punch-${SpriteDirections.LEFT}`,
+      frames: this.anims.generateFrameNumbers(`axolotl-${this.color}`, {start: 9, end: 9}),
+      frameRate: 1,
+    })
+  }
+
+  // Joue la frame de coup de poing pendant durationMs : le flag punching
+  // verrouille playAnimations pour que update()/les mouvements distants
+  // n'écrasent pas la pose en cours.
+  playPunch(direction = this.direction, durationMs = 280) {
+    if (!this.anims) {
+      return
+    }
+
+    this.punching = true
+    this.play(`axolotl-${this.color}-punch-${direction}`, true)
+
+    if (this.punchTimer) {
+      clearTimeout(this.punchTimer)
+    }
+    this.punchTimer = setTimeout(() => {
+      this.punching = false
+      this.punchTimer = null
+    }, durationMs)
   }
 
   destroy() {
@@ -136,6 +180,11 @@ export default class Axolotl extends GameObjects.Sprite {
       return
     }
 
+    // Pendant un coup de poing, la pose punch a la priorité.
+    if (this.punching) {
+      return
+    }
+
     if (jumping) {
       this.play(`axolotl-${this.color}-jump-${direction}`, true)
     } else {
@@ -162,7 +211,7 @@ export default class Axolotl extends GameObjects.Sprite {
       this.direction = SpriteDirections.LEFT
 
       if (!this.scene.freezeMovements) {
-        this.body.setVelocityX(-200)
+        this.body.setVelocityX(-200 * this.speedFactor)
         this.walking = true
       }
     }
@@ -171,7 +220,7 @@ export default class Axolotl extends GameObjects.Sprite {
       this.direction = SpriteDirections.RIGHT
 
       if (!this.scene.freezeMovements) {
-        this.body.setVelocityX(200)
+        this.body.setVelocityX(200 * this.speedFactor)
         this.walking = true
       }
     }
@@ -186,8 +235,8 @@ export default class Axolotl extends GameObjects.Sprite {
     }
 
     this.playAnimations()
-    this.updateNamePosition(this.body.x + 50, this.body.y - 28)
-    this.updateNameTrianglePosition(this.body.x + 60, this.body.y - 3)
+    this.updateNamePosition(this.body.x + 50 * this.zoom, this.body.y - 28)
+    this.updateNameTrianglePosition(this.body.x + 60 * this.zoom, this.body.y - 3)
   }
 
   updateNamePosition(x, y) {

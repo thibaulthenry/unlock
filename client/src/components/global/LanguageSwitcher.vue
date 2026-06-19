@@ -1,48 +1,66 @@
 <template>
-  <v-flex shrink>
+  <div class="shrink">
     <v-select
-        v-model="$i18n.locale"
-        :items="$i18n.availableLocales"
+        v-model="locale"
+        :items="availableLocales"
         :hide-details="true"
-        @change="changeVuetifyLocale()"
-        dark
+        density="compact"
+        variant="plain"
+        theme="dark"
     >
-      <template slot="selection" slot-scope="data">
-        <flag :iso="data.item" :squared="false"/>
-        <span v-if="!$vuetify.breakpoint.mobile" class="ml-2">{{ $t('languages.' + data.item) }}</span>
+      <template #selection="{ item }">
+        <flag :iso="item.value" :squared="false"/>
+        <span v-if="!$vuetify.display.mobile" class="ml-2">{{ $t('languages.' + item.value) }}</span>
       </template>
-      <template slot="item" slot-scope="data">
-        <flag :iso="data.item" :squared="false"/>
-        <span v-if="!$vuetify.breakpoint.mobile" class="ml-2">{{ $t('languages.' + data.item) }}</span>
+      <template #item="{ item, props }">
+        <v-list-item v-bind="props" title="">
+          <flag :iso="item.value" :squared="false"/>
+          <span v-if="!$vuetify.display.mobile" class="ml-2">{{ $t('languages.' + item.value) }}</span>
+        </v-list-item>
       </template>
     </v-select>
-  </v-flex>
+  </div>
 </template>
 
 <script>
-import bus from '../../services/event-bus'
-import EventTypes from '../../constants/event-types'
+import { useI18n } from 'vue-i18n'
+import { useLocale } from 'vuetify'
+import bus from '@/services/event-bus'
+import EventTypes from '@/constants/event-types'
 
 export default {
+  setup() {
+    const i18n = useI18n()
+    const vuetifyLocale = useLocale()
+    return { i18n, vuetifyLocale }
+  },
+
+  computed: {
+    locale: {
+      get() { return this.i18n.locale.value },
+      set(value) {
+        this.i18n.locale.value = value
+        this.applyLocale(value)
+      },
+    },
+
+    availableLocales() {
+      return this.i18n.availableLocales
+    },
+  },
+
   methods: {
-    changeVuetifyLocale() {
-      let locale = 'fr'
-
-      switch (this.$i18n.locale) {
-        case 'gb':
-          locale = 'en'
-          break
-      }
-
-      this.$vuetify.lang.current = locale
+    applyLocale(value) {
+      const locale = value === 'gb' ? 'en' : 'fr'
+      this.vuetifyLocale.current.value = locale
       bus.$emit(EventTypes.LANGUAGE_CHANGE, locale)
-    }
-  }
+    },
+  },
 }
 </script>
 
 <style scoped>
-::v-deep .v-select__selections input {
+:deep(.v-select__selection-text) {
   display: none;
 }
 

@@ -7,19 +7,19 @@
     >
       <v-progress-linear
           color="amber"
-          :value="percentage"
+          :model-value="percentage"
           rounded
           striped
           height="20"
       >
-        <template v-slot:default="{ value }">
+        <template #default="{ value }">
           <span
               id="countdown"
               class="countdown"
               :class="{
-                'green--text': percentage >= 50,
-                'yellow--text': percentage < 50 && percentage >= 20,
-                'red--text': percentage < 20,
+                'text-green': percentage >= 50,
+                'text-yellow': percentage < 50 && percentage >= 20,
+                'text-red': percentage < 20,
               }"
           >
             {{ Math.ceil((value * delay) / 100) }}
@@ -38,33 +38,38 @@
 </template>
 
 <script>
-import bus from '../services/event-bus'
-import EndScene from '../models/scenes/end-scene'
-import EventTypes from '../constants/event-types'
-import GameFallingApplesScene from '../models/scenes/game-falling-apples-scene'
-import GameSpaceVegetablesScene from '../models/scenes/game-space-vegetables-scene'
-import GameStarWarsScene from '../models/scenes/game-star-wars-scene'
-import LobbyScene from '../models/scenes/lobby-scene'
-import LobbyStates from '../constants/lobby-states'
+import bus from '@/services/event-bus'
+import EndScene from '@/models/scenes/end-scene'
+import EventTypes from '@/constants/event-types'
+import { getGyroControls } from '@/services/gyro-controls'
+import GyroControls from '@/services/gyro-controls'
+import GameBrawlScene from '@/models/scenes/game-brawl-scene'
+import GameFallingApplesScene from '@/models/scenes/game-falling-apples-scene'
+import GameFloatingIslandsScene from '@/models/scenes/game-floating-islands-scene'
+import GameHotPotatoScene from '@/models/scenes/game-hot-potato-scene'
+import GameSpaceVegetablesScene from '@/models/scenes/game-space-vegetables-scene'
+import GameStarWarsScene from '@/models/scenes/game-star-wars-scene'
+import PacketClientFocus from '@/models/packets/packet-client-focus'
+import LobbyScene from '@/models/scenes/lobby-scene'
+import LobbyStates from '@/constants/lobby-states'
 import Phaser from 'phaser'
-import PreGameScene from '../models/scenes/pre-game-scene'
-import PreGameFallScene from '../models/scenes/pre-game-fall-scene'
-import SceneInputs from '../constants/scene-inputs'
-import SceneKeys from '../constants/scene-keys'
-import Vue from 'vue'
+import PreGameScene from '@/models/scenes/pre-game-scene'
+import PreGameFallScene from '@/models/scenes/pre-game-fall-scene'
+import SceneInputs from '@/constants/scene-inputs'
+import SceneKeys from '@/constants/scene-keys'
+import tickSound from '@/assets/sounds/tick.mp3'
+import loopSound from '@/assets/sounds/loop.mp3'
 
 export default {
-  data: () => {
-    return {
-      game: null,
-      delay: 0,
-      percentage: 100,
-      sceneKey: SceneKeys.LOBBY,
-      tick: -1,
-      tickAudio: new Audio(require('../assets/sounds/tick.mp3')),
-      loopAudio: new Audio(require('../assets/sounds/loop.mp3'))
-    }
-  },
+  data: () => ({
+    game: null,
+    delay: 0,
+    percentage: 100,
+    sceneKey: SceneKeys.LOBBY,
+    tick: -1,
+    tickAudio: new Audio(tickSound),
+    loopAudio: new Audio(loopSound),
+  }),
 
   computed: {
     footerMinimized() {
@@ -79,11 +84,10 @@ export default {
       get() {
         return this.$store.state.playMusicLoop
       },
-
       set(value) {
-        this.$store.commit('SET_PLAY_MUSIC_LOOP', {play: value})
-      }
-    }
+        this.$store.commit('SET_PLAY_MUSIC_LOOP', { play: value })
+      },
+    },
   },
 
   methods: {
@@ -92,27 +96,23 @@ export default {
         this.game.scene.stop(this.sceneKey)
         this.game.scene.remove(this.sceneKey)
         this.game.scene.add(sceneKey, this.getSceneByKey(sceneKey), true, data)
-        this.$store.commit('SET_SCENE_INPUTS', {inputs: SceneInputs[sceneKey]})
+        this.$store.commit('SET_SCENE_INPUTS', { inputs: SceneInputs[sceneKey] })
         this.sceneKey = sceneKey
       }
     },
 
     getSceneByKey(sceneKey) {
       switch (sceneKey) {
-        case SceneKeys.END:
-          return EndScene
-        case SceneKeys.GAME_FALLING_APPLES:
-          return GameFallingApplesScene
-        case SceneKeys.GAME_SPACE_VEGETABLES:
-          return GameSpaceVegetablesScene
-        case SceneKeys.GAME_STAR_WARS:
-          return GameStarWarsScene
-        case SceneKeys.LOBBY:
-          return LobbyScene
-        case SceneKeys.PRE_GAME:
-          return PreGameScene
-        case SceneKeys.PRE_GAME_FALL:
-          return PreGameFallScene
+        case SceneKeys.END: return EndScene
+        case SceneKeys.GAME_BRAWL: return GameBrawlScene
+        case SceneKeys.GAME_FALLING_APPLES: return GameFallingApplesScene
+        case SceneKeys.GAME_FLOATING_ISLANDS: return GameFloatingIslandsScene
+        case SceneKeys.GAME_HOT_POTATO: return GameHotPotatoScene
+        case SceneKeys.GAME_SPACE_VEGETABLES: return GameSpaceVegetablesScene
+        case SceneKeys.GAME_STAR_WARS: return GameStarWarsScene
+        case SceneKeys.LOBBY: return LobbyScene
+        case SceneKeys.PRE_GAME: return PreGameScene
+        case SceneKeys.PRE_GAME_FALL: return PreGameFallScene
       }
     },
 
@@ -123,13 +123,15 @@ export default {
         this.$store.dispatch('notifyError', this.$t('snackbar.error.lobbyInterrupted'))
       }
 
-      if (this.$route.path !== '/') {
-        this.$router.push('/')
-      }
+      if (this.$route.path !== '/') this.$router.push('/')
     },
 
     preventRightClick(event) {
       event.preventDefault()
+    },
+
+    handleVisibilityChange() {
+      this.$store.dispatch('sendPacket', new PacketClientFocus(!this.$document.hidden))
     },
 
     resetMusicLoop() {
@@ -139,14 +141,11 @@ export default {
       this.loopAudio.pause()
     },
 
-    tickCountdown({delay, percentage}) {
+    tickCountdown({ delay, percentage }) {
       this.delay = delay
-
       this.percentage = percentage
 
-      if (this.percentage === 0) {
-        this.tick = -1
-      }
+      if (this.percentage === 0) this.tick = -1
 
       const tick = Math.ceil((percentage * delay) / 100)
 
@@ -169,11 +168,12 @@ export default {
         this.loopAudio.volume = 0.32
         this.playMusicLoop = true
       }
-    }
+    },
   },
 
   mounted() {
     this.$window.addEventListener('contextmenu', this.preventRightClick)
+    this.$document.addEventListener('visibilitychange', this.handleVisibilityChange)
     bus.$emit(EventTypes.LISTEN_MOUSE_EVENTS)
     bus.$on(EventTypes.GAME_CHANGE_SCENE, (args) => this.changeScene(args.key, args.data))
     bus.$on(EventTypes.GAME_COUNTDOWN, this.tickCountdown)
@@ -190,32 +190,62 @@ export default {
         autoCenter: Phaser.Scale.CENTER_BOTH,
       },
       resizeInterval: 10,
-      antialias: true
+      antialias: true,
     })
 
     this.game.sound.pauseOnBlur = false
     this.loopAudio.loop = true
 
-    this.$store.commit('SET_SCENE_INPUTS', {inputs: SceneInputs[SceneKeys.LOBBY]})
+    this.$store.commit('SET_SCENE_INPUTS', { inputs: SceneInputs[SceneKeys.LOBBY] })
 
     this.game.scene.add(SceneKeys.LOBBY, LobbyScene, true)
-    Vue.prototype.$game = this.game
+    // L'instance Phaser est exposée globalement pour les composants
+    // qui en ont besoin (clavier virtuel, souris). Voir main.js.
+    window.$game = this.game
+
+    // Gyro mobile : on active uniquement si l'utilisateur l'a autorisé
+    // sur la home. La permission iOS reste valide pour la session, donc
+    // pas de nouvelle requestPermission ici tant que la page n'est pas
+    // rechargée.
+    if (GyroControls.getPreference() === 'enabled' && GyroControls.isSupported()) {
+      this.gyro = getGyroControls()
+      this.gyro.enable(document.getElementById('game-container'))
+    }
   },
 
-  beforeDestroy() {
+  beforeUnmount() {
+    if (this.gyro) {
+      this.gyro.disable()
+      this.gyro = null
+    }
     this.resetMusicLoop()
     this.$window.removeEventListener('contextmenu', this.preventRightClick)
+    this.$document.removeEventListener('visibilitychange', this.handleVisibilityChange)
     bus.$off(EventTypes.GAME_CHANGE_SCENE)
     bus.$off(EventTypes.GAME_COUNTDOWN)
     bus.$off(EventTypes.LOBBY_INTERRUPT)
     bus.$off(EventTypes.TOGGLE_MUSIC_LOOP)
+    // Libère explicitement les captures clavier de Phaser AVANT destroy :
+    // sinon les KeyA/KeyD/Space/Arrow etc. enregistrés dans les scènes
+    // (Brawl, Star Wars, etc.) peuvent rester bound au document et
+    // intercepter les frappes sur la home page (impossible de taper un
+    // nouveau code de lobby).
+    if (this.game?.input?.keyboard) {
+      try { this.game.input.keyboard.clearCaptures() } catch (ignored) { /* noop */ }
+      try { this.game.input.keyboard.removeAllKeys(true, true) } catch (ignored) { /* noop */ }
+    }
     this.game.destroy(true, false)
-  }
+    window.$game = null
+    // Réinitialise les inputs autorisés (sinon Keyboard.vue/Mouse.vue,
+    // s'ils se remontent avant que Phaser ait fini de set up la nouvelle
+    // scène, restent verrouillés sur la dernière configuration jouée).
+    this.$store.commit('SET_SCENE_INPUTS', { inputs: null })
+  },
 }
 </script>
 
 <style scoped>
-::v-deep canvas {
+:deep(canvas) {
   margin: 0 !important;
 }
 
@@ -240,17 +270,22 @@ export default {
   user-select: none;
 }
 
+/* Le canvas reste carré et fixe en ratio, mais on clampe sa taille au
+ * minimum entre la viewport height et la viewport width : sur portrait
+ * mobile (iPhone SE 375×667) un width de 60vh = 400 px débordait
+ * horizontalement. min(60vh, 90vw) garantit qu'on tient toujours dans
+ * l'écran tout en restant carré. */
 #countdown-container {
   transition: width 1s;
   box-sizing: content-box;
-  width: 45vh;
+  width: min(45vh, 90vw);
   height: 50px;
   padding-left: 18px;
   padding-right: 18px;
 }
 
 .countdown-container-maximized {
-  width: 60vh !important;
+  width: min(60vh, 90vw) !important;
 }
 
 #game-wrap {
@@ -259,20 +294,20 @@ export default {
 
 #game-container {
   transition: width 1s, height 1s;
-  width: 45vh;
-  height: 45vh;
+  width: min(45vh, 90vw);
+  height: min(45vh, 90vw);
 }
 
 .game-container-maximized {
-  width: 60vh !important;
-  height: 60vh !important;
+  width: min(60vh, 90vw) !important;
+  height: min(60vh, 90vw) !important;
 }
 
-::v-deep .v-progress-linear {
+:deep(.v-progress-linear) {
   overflow: inherit;
 }
 
-::v-deep .v-progress-linear__determinate {
+:deep(.v-progress-linear__determinate) {
   border-radius: 4px;
 }
 </style>

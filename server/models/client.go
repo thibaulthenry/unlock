@@ -11,6 +11,7 @@ import (
 type Client struct {
 	Channel         chan []byte           `json:"-"  firestore:"-"`
 	Connection      *websocket.Conn       `json:"-" firestore:"-"`
+	Focus           bool                  `json:"focus" firestore:"focus"`
 	Lobby           *Lobby                `json:"-" firestore:"-"`
 	LobbyRepository *LobbyRepository      `json:"-" firestore:"-"`
 	Name            string                `json:"name" firestore:"name"`
@@ -24,10 +25,35 @@ func NewClient(connection *websocket.Conn, lobbyRepository *LobbyRepository) *Cl
 	return &Client{
 		Channel:         make(chan []byte, 256),
 		Connection:      connection,
+		Focus:           true,
 		LobbyRepository: lobbyRepository,
 		Spectating:      false,
 		Uuid:            uuid.NewString(),
 	}
+}
+
+// HandleGameDataOnLeave est appelé quand un client quitte un lobby actif.
+// Pour les mini-jeux qui ont une notion d'élimination (Floating Islands),
+// le départ doit faire tomber le joueur côté serveur pour ne pas bloquer
+// la partie.
+func (client *Client) HandleGameDataOnLeave() (err error) {
+	lobby := client.Lobby
+	if lobby == nil {
+		return nil
+	}
+
+	game, gameExists := lobby.CurrentGame()
+	if _, clientExists := lobby.Clients[client.Uuid]; !clientExists || !gameExists {
+		return nil
+	}
+
+	switch game.Data.(type) {
+	case *DataSceneFloatingIslands:
+		packetFall := &PacketClientSceneFloatingIslandFall{}
+		return packetFall.Receive(client)
+	}
+
+	return nil
 }
 
 func (client *Client) initConnection() (err error) {
@@ -51,6 +77,10 @@ func (client *Client) quit() (err error) {
 	err = client.Connection.Close()
 	if err != nil || lobby == nil {
 		return err
+	}
+
+	if err = client.HandleGameDataOnLeave(); err != nil {
+		log.Println("HandleGameDataOnLeave:", err)
 	}
 
 	lobby.UnregisterWaitGroup.Add(1)

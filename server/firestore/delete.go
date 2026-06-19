@@ -1,7 +1,7 @@
 package firestore
 
 import (
-	"github.com/pkg/errors"
+	"errors"
 )
 
 // DeleteDocument deletes the targeted document with specified paths /{collectionID}/{documentID}
@@ -16,5 +16,5 @@ func DeleteDocument(collectionID string, documentID string) (err error) {
 	}
 
 	_, err = client.Collection(collectionID).Doc(documentID).Delete(ctx)
-	return errors.WithStack(err)
+	return err
 }

@@ -1,7 +1,7 @@
-import bus from '../../services/event-bus'
-import EventTypes from '../../constants/event-types'
-import PacketLabels from '../../constants/packet-labels'
-import SceneKeys from '../../constants/scene-keys'
+import bus from '@/services/event-bus'
+import EventTypes from '@/constants/event-types'
+import PacketLabels from '@/constants/packet-labels'
+import SceneKeys from '@/constants/scene-keys'
 
 export default class PacketServerLobbyEnd {
 

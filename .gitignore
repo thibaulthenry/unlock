@@ -1,0 +1,19 @@
+# Variables d'env (la version .env.example est versionnée).
+.env
+.env.local
+.env.*.local
+client/.env.production
+
+# Logs et debug firebase locaux
+.dev/
+firestore-debug.log
+firebase-debug.log
+
+# Firebase
+.firebase/
+
+# OS / éditeurs
+.DS_Store
+.idea/
+*.swp
+__pycache__/

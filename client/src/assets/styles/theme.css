@@ -1,0 +1,245 @@
+/* =============================================================================
+ * TOMBEAU D'UNLOCK — système de design "donjon dans le désert".
+ *
+ * Inspiré de la scène principale (axolotls, fond doré, cadenas du logo) et
+ * du concept de donjon ancien enseveli sous le sable : ciel crépusculaire
+ * pourpre, grès chaud, accents or martelé. Le canvas Phaser reste intact —
+ * ces règles ne stylent QUE le chrome Vue/Vuetify autour.
+ * ============================================================================= */
+
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Roboto:wght@300;400;500;700&display=swap');
+
+:root {
+  /* Ciel crépusculaire du désert */
+  --dungeon-sky:        #1c0e2a;
+  --dungeon-sky-deep:   #0d0617;
+  --dungeon-sky-glow:   #3d2855;
+
+  /* Grès et pierre du donjon */
+  --dungeon-stone:      #2a1d12;
+  --dungeon-stone-up:   #3a2818;
+  --dungeon-stone-down: #1a1108;
+
+  /* Sable et terre */
+  --dungeon-sand:       #c4a06b;
+  --dungeon-terracotta: #c4622d;
+  --dungeon-rust:       #8b3a16;
+
+  /* Or martelé (palette logo) */
+  --dungeon-gold:       #febf04;
+  --dungeon-gold-light: #ffd65e;
+  --dungeon-gold-deep:  #a37c08;
+  --dungeon-gold-shade: #5b2600;
+
+  /* Texte parchemin */
+  --dungeon-parchment:  #f4e8d0;
+  --dungeon-ink:        #1c0e2a;
+
+  /* Statut */
+  --dungeon-ember:      #d94c2e;
+  --dungeon-oasis:      #5fa663;
+  --dungeon-lapis:      #7bb3ca;
+}
+
+/* -- Fond global : ciel crépusculaire + lueur lointaine ------------------- */
+
+html, body, #app, .v-application {
+  background:
+    radial-gradient(ellipse 80% 50% at 50% 25%, var(--dungeon-sky-glow) 0%, transparent 65%),
+    radial-gradient(ellipse 60% 40% at 50% 95%, rgba(254, 191, 4, 0.08) 0%, transparent 70%),
+    linear-gradient(180deg, var(--dungeon-sky) 0%, var(--dungeon-sky-deep) 100%) !important;
+  background-attachment: fixed !important;
+  color: var(--dungeon-parchment);
+  font-family: 'Roboto', sans-serif;
+}
+
+.v-application__wrap {
+  background: transparent !important;
+}
+
+/* -- Typographie cérémoniale --------------------------------------------- */
+
+.dungeon-title {
+  font-family: 'Cinzel', serif;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--dungeon-gold);
+  text-shadow:
+    0 1px 0 var(--dungeon-gold-shade),
+    0 0 12px rgba(254, 191, 4, 0.3);
+}
+
+.dungeon-subtitle {
+  font-family: 'Cinzel', serif;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  color: var(--dungeon-parchment);
+}
+
+/* -- Stèle de grès : carte / dialog / panneau ---------------------------- */
+
+.dungeon-card {
+  position: relative;
+  background:
+    linear-gradient(180deg, var(--dungeon-stone-up) 0%, var(--dungeon-stone) 100%) !important;
+  border: 2px solid var(--dungeon-gold-deep) !important;
+  border-radius: 12px !important;
+  color: var(--dungeon-parchment) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(254, 191, 4, 0.35),
+    inset 0 -2px 0 rgba(0, 0, 0, 0.5),
+    0 6px 22px rgba(0, 0, 0, 0.55);
+}
+
+/* Liseré inférieur doré (filet gravé) */
+.dungeon-card::before {
+  content: '';
+  position: absolute;
+  inset: 5px;
+  border: 1px solid rgba(254, 191, 4, 0.22);
+  border-radius: 7px;
+  pointer-events: none;
+}
+
+/* -- Bouton "or martelé" — pour les CTA primaires ------------------------ */
+
+.dungeon-btn {
+  background:
+    linear-gradient(180deg, var(--dungeon-gold-light) 0%, var(--dungeon-gold) 40%, var(--dungeon-gold-deep) 100%) !important;
+  color: var(--dungeon-ink) !important;
+  border: 1px solid var(--dungeon-gold-shade) !important;
+  font-family: 'Cinzel', serif !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.1em !important;
+  text-transform: uppercase !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 240, 180, 0.7),
+    inset 0 -2px 0 rgba(91, 38, 0, 0.5),
+    0 3px 10px rgba(0, 0, 0, 0.45) !important;
+  transition: box-shadow 0.18s ease, transform 0.1s ease;
+}
+
+.dungeon-btn:hover {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 240, 180, 0.95),
+    inset 0 -2px 0 rgba(91, 38, 0, 0.5),
+    0 3px 18px rgba(254, 191, 4, 0.55) !important;
+}
+
+.dungeon-btn:active {
+  transform: translateY(1px);
+}
+
+/* Variante "pierre" — bouton secondaire */
+.dungeon-btn-stone {
+  background:
+    linear-gradient(180deg, var(--dungeon-stone-up) 0%, var(--dungeon-stone-down) 100%) !important;
+  color: var(--dungeon-parchment) !important;
+  border: 1px solid var(--dungeon-gold-deep) !important;
+  font-family: 'Cinzel', serif !important;
+  font-weight: 500 !important;
+  letter-spacing: 0.08em !important;
+  text-transform: uppercase !important;
+  box-shadow:
+    inset 0 1px 0 rgba(254, 191, 4, 0.22),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.5),
+    0 2px 8px rgba(0, 0, 0, 0.4) !important;
+}
+
+/* -- Arche / navbar : pierre sombre + filet doré inférieur --------------- */
+
+.dungeon-archway {
+  background:
+    linear-gradient(180deg, var(--dungeon-stone) 0%, var(--dungeon-stone-down) 100%) !important;
+  border-bottom: 2px solid var(--dungeon-gold-deep) !important;
+  box-shadow:
+    inset 0 -1px 0 rgba(254, 191, 4, 0.4),
+    0 4px 14px rgba(0, 0, 0, 0.55) !important;
+}
+
+/* -- Footer : pierre sombre + filet doré supérieur + halo de torche ------ */
+
+.dungeon-footer {
+  background:
+    linear-gradient(180deg, var(--dungeon-stone) 0%, var(--dungeon-stone-down) 100%) !important;
+  border-top: 2px solid var(--dungeon-gold-deep) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(254, 191, 4, 0.4),
+    0 -8px 30px rgba(254, 191, 4, 0.05) !important;
+  color: var(--dungeon-parchment) !important;
+}
+
+/* -- Drawer : alcôve de torche ------------------------------------------- */
+
+.dungeon-drawer {
+  background:
+    linear-gradient(180deg, var(--dungeon-stone) 0%, var(--dungeon-stone-down) 100%) !important;
+  border-right: 2px solid var(--dungeon-gold-deep) !important;
+  color: var(--dungeon-parchment) !important;
+}
+
+/* -- Frame : encadrement décoratif pour image / carrousel ---------------- */
+
+.dungeon-frame {
+  border: 3px solid var(--dungeon-gold-deep) !important;
+  border-radius: 8px !important;
+  background: var(--dungeon-stone) !important;
+  box-shadow:
+    inset 0 0 0 2px var(--dungeon-sky-deep),
+    0 0 28px rgba(254, 191, 4, 0.18),
+    0 6px 20px rgba(0, 0, 0, 0.5) !important;
+}
+
+/* -- Halo de torche autour d'un élément (drawer button, etc.) ------------ */
+
+.dungeon-torch-glow {
+  filter:
+    drop-shadow(0 0 4px rgba(254, 191, 4, 0.6))
+    drop-shadow(0 0 10px rgba(254, 191, 4, 0.3));
+}
+
+/* -- Champ texte : encre sur parchemin ----------------------------------- */
+
+:deep(.v-field--variant-outlined) .v-field__outline__start,
+:deep(.v-field--variant-outlined) .v-field__outline__end,
+:deep(.v-field--variant-outlined) .v-field__outline__notch::before,
+:deep(.v-field--variant-outlined) .v-field__outline__notch::after {
+  color: var(--dungeon-gold-deep) !important;
+}
+
+/* -- Slider track doré --------------------------------------------------- */
+
+.dungeon-slider :deep(.v-slider-track__background) {
+  background: var(--dungeon-stone-up) !important;
+}
+
+.dungeon-slider :deep(.v-slider-track__fill) {
+  background: var(--dungeon-gold) !important;
+}
+
+.dungeon-slider :deep(.v-slider-thumb) {
+  color: var(--dungeon-gold) !important;
+}
+
+/* -- Snackbar : tablette de pierre --------------------------------------- */
+
+.dungeon-snackbar :deep(.v-snackbar__wrapper) {
+  background:
+    linear-gradient(180deg, var(--dungeon-stone-up) 0%, var(--dungeon-stone) 100%) !important;
+  border: 2px solid var(--dungeon-gold-deep) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(254, 191, 4, 0.3),
+    0 6px 24px rgba(0, 0, 0, 0.6) !important;
+}
+
+/* -- Animation : flamme légère pour les pictos clés / cadenas ------------ */
+
+@keyframes dungeon-flame {
+  0%, 100% { filter: drop-shadow(0 0 4px rgba(254, 191, 4, 0.5)); }
+  50%      { filter: drop-shadow(0 0 10px rgba(254, 191, 4, 0.8)); }
+}
+
+.dungeon-flame {
+  animation: dungeon-flame 2.6s ease-in-out infinite;
+}

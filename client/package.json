@@ -1,58 +1,37 @@
 {
   "name": "unlock",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
+  "type": "module",
   "scripts": {
-    "serve": "vue-cli-service serve --port 3000",
-    "build": "vue-cli-service build",
-    "lint": "vue-cli-service lint"
+    "dev": "vite",
+    "serve": "vite --port 3000",
+    "build": "vite build",
+    "preview": "vite preview",
+    "lint": "eslint . --fix"
   },
   "dependencies": {
-    "@mdi/font": "^5.9.55",
-    "core-js": "^3.6.5",
-    "firebase": "^8.6.0",
-    "lodash": "^4.17.21",
-    "path-parse": ">=1.0.7",
-    "phaser": "^3.54.0",
-    "url-parse": ">=1.5.2",
-    "vue": "^2.6.11",
-    "vue-firestore": "^0.3.30",
-    "vue-flag-icon": "^1.0.6",
-    "vue-i18n": "^8.24.4",
-    "vue-router": "^3.5.1",
-    "vuetify": "^2.5.0",
-    "vuex": "^3.6.2",
-    "vuexfire": "^3.2.5"
+    "@mdi/font": "^7.4.47",
+    "firebase": "^11.1.0",
+    "lodash-es": "^4.17.21",
+    "mitt": "^3.0.1",
+    "phaser": "^3.87.0",
+    "pinia": "^2.3.0",
+    "vue": "^3.5.13",
+    "vue-flag-icon": "^2.0.0",
+    "vue-i18n": "^11.0.1",
+    "vue-router": "^4.5.0",
+    "vuefire": "^3.2.1",
+    "vuetify": "^3.7.6"
   },
   "devDependencies": {
-    "@vue/cli-plugin-babel": "~4.5.0",
-    "@vue/cli-plugin-eslint": "~4.5.0",
-    "@vue/cli-service": "~4.5.0",
-    "babel-eslint": "^10.1.0",
-    "eslint": "^6.7.2",
-    "eslint-plugin-vue": "^6.2.2",
-    "vue-template-compiler": "^2.6.11"
-  },
-  "eslintConfig": {
-    "root": true,
-    "env": {
-      "node": true
-    },
-    "extends": [
-      "plugin:vue/essential",
-      "eslint:recommended"
-    ],
-    "parserOptions": {
-      "parser": "babel-eslint"
-    },
-    "rules": {
-      "no-empty": [
-        2,
-        {
-          "allowEmptyCatch": true
-        }
-      ]
-    }
+    "@vitejs/plugin-vue": "^5.2.1",
+    "eslint": "^9.17.0",
+    "eslint-plugin-vue": "^9.32.0",
+    "sass-embedded": "^1.83.0",
+    "vite": "^6.0.5",
+    "vite-plugin-vuetify": "^2.0.4",
+    "vue-eslint-parser": "^9.4.3"
   },
   "browserslist": [
     "> 1%",

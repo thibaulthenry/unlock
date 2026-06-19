@@ -2,8 +2,6 @@ package models
 
 import (
 	"encoding/json"
-	"github.com/pkg/errors"
-	"time"
 	"unlock/constants"
 )
 
@@ -22,7 +20,7 @@ func NewPacketServerGameStart() *PacketServerGameStart {
 func (packet *PacketServerGameStart) Send(lobby *Lobby) (err error) {
 	payload, err := json.Marshal(packet)
 	if err != nil {
-		return errors.WithStack(err)
+		return err
 	}
 
 	game, exists := lobby.CurrentGame()
@@ -41,21 +39,19 @@ func (packet *PacketServerGameStart) Send(lobby *Lobby) (err error) {
 		return nil
 	})
 
-	game.TimeoutUuids[timeoutUuid] = true
+	game.AddTimeoutUuid(timeoutUuid)
 
-	if game.SceneKey == constants.SceneKeyGameStarWars {
-		data := NewDataStarWarsScene()
-		game.Data = data
-
-		timeoutUuid = lobby.TimeoutTick(game.Duration, func() error { return nil }, 2000, func(startTime time.Time) (err error) {
-			data.CreateStar()
-			return NewPacketServerSceneData(data, constants.SceneKeyGameStarWars).Send(lobby)
-		})
-
-		game.TimeoutUuids[timeoutUuid] = true
+	err = game.HandleGameData(lobby)
+	if err != nil {
+		return err
 	}
 
-	lobby.Broadcast <- payload
+	// Quand HandleGameData déclenche un win immédiat (Floating Islands avec
+	// un seul joueur, par exemple), le lobby peut déjà être terminé : on ne
+	// re-broadcast pas un GAME_START qui n'a plus de sens.
+	if lobby.State == constants.LobbyStateStarted {
+		lobby.Broadcast <- payload
+	}
 
 	return lobby.PushToFirestore()
 }

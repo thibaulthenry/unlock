@@ -1,7 +1,7 @@
 package firestore
 
 import (
-	"github.com/pkg/errors"
+	"errors"
 )
 
 // SetDocument sets (creates or overwrites) a document at /{collectionID}/{documentID} on the project's firestore
@@ -17,5 +17,5 @@ func SetDocument(collectionID string, documentID string, document interface{}) (
 	}
 
 	_, err = client.Collection(collectionID).Doc(documentID).Set(ctx, document)
-	return errors.WithStack(err)
+	return err
 }

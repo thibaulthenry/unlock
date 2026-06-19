@@ -1,15 +1,14 @@
 <template>
-  <v-app id="app">
+  <v-app id="app" theme="dungeon">
     <Navigation/>
 
-    <v-main style="background: #041336">
-      <v-container fluid fill-height class="d-flex flex-column justify-center">
+    <v-main>
+      <v-container fluid class="fill-height d-flex flex-column justify-center">
         <v-icon
-            class="drawer-button"
+            class="drawer-button dungeon-torch-glow"
             :class="{'drawer-button-active': drawer && $route.name !== 'lobbies'}"
-            :color="drawer ? '#febf04' : undefined"
-            dark
-            x-large
+            :color="drawer ? 'primary' : 'on-background'"
+            size="x-large"
             @click.self="drawer = !drawer"
         >
           mdi-{{ $route.name === 'lobbies' ? 'format-list-numbered-rtl' : 'cog-outline'}}
@@ -17,14 +16,12 @@
 
         <v-navigation-drawer
             v-model="drawer"
-            class="elevation-0"
-            :width="$vuetify.breakpoint.xs ? '100%' : '350px'"
-            absolute
-            dark
+            class="elevation-0 dungeon-drawer"
+            :width="$vuetify.display.xs ? undefined : 350"
+            theme="dungeon"
             touchless
-            hide-overlay
         >
-          <Ladder v-if="$route.name === 'lobbies'"/>
+          <Leaderboard v-if="$route.name === 'lobbies'"/>
           <Settings v-else/>
         </v-navigation-drawer>
 
@@ -39,21 +36,21 @@
 </template>
 
 <script>
-import Footer from './components/global/Footer'
-import GameFooter from './components/global/GameFooter'
-import Ladder from './components/Ladder'
-import Navigation from './components/global/Navigation'
-import Settings from './components/Settings'
-import Snackbar from './components/global/Snackbar'
+import Footer from './components/global/Footer.vue'
+import GameFooter from './components/global/GameFooter.vue'
+import Leaderboard from './components/Leaderboard.vue'
+import Navigation from './components/global/Navigation.vue'
+import Settings from './components/Settings.vue'
+import Snackbar from './components/global/Snackbar.vue'
 
 export default {
   components: {
     Settings,
-    Ladder,
+    Leaderboard,
     Footer,
     GameFooter,
     Navigation,
-    Snackbar
+    Snackbar,
   },
 
   computed: {
@@ -61,12 +58,11 @@ export default {
       get() {
         return this.$store.state.drawer
       },
-
       set(value) {
-        this.$store.commit('SET_DRAWER', {drawer: value})
-      }
-    }
-  }
+        this.$store.commit('SET_DRAWER', { drawer: value })
+      },
+    },
+  },
 }
 </script>
 
@@ -74,8 +70,8 @@ export default {
 html {
   overflow-x: hidden;
   font-family: "Roboto Light", sans-serif;
-  -ms-overflow-style: none; /* IE and Edge */
-  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
 
 html::-webkit-scrollbar {
@@ -86,11 +82,21 @@ html::-webkit-scrollbar {
   overflow: hidden;
 }
 
+/* Le bouton "drawer" doit rester à l'intérieur de la navbar : la navbar
+ * passe de 64 px (≥ sm) à 56 px (xs), donc on centre verticalement sur
+ * sa hauteur avec calc plutôt qu'un top fixe en px qui collait au logo
+ * sur mobile. */
 .drawer-button {
   position: fixed !important;
   left: 10px;
-  top: 12px;
+  top: calc((var(--v-layout-top, 64px) - 32px) / 2);
   z-index: 9;
+}
+
+@media (max-width: 599px) {
+  .drawer-button {
+    top: calc((56px - 32px) / 2);
+  }
 }
 
 .drawer-button-active {

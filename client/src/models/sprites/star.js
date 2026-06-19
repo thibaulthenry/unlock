@@ -18,7 +18,13 @@ export default class Star extends GameObjects.Sprite {
     if (this.body && this.body.checkCollision) {
       this.body.checkCollision.none = true
     }
-
+    // Coupe explicitement le body : sinon il peut encore intersecter
+    // pendant la frame courante et provoquer un overlap fantôme
+    // (cause du bug "étoile qui ne disparait pas" en Star Wars).
+    if (this.body) {
+      this.body.enable = false
+    }
+    this.setVisible(false)
     super.destroy()
   }
 

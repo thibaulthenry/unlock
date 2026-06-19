@@ -2,7 +2,6 @@ package models
 
 import (
 	"encoding/json"
-	"github.com/pkg/errors"
 	"unlock/constants"
 )
 
@@ -25,7 +24,7 @@ func NewPacketServerConnection(client *Client, lobbyCode string) *PacketServerCo
 func (packet *PacketServerConnection) Send(client *Client) (err error) {
 	payload, err := json.Marshal(packet)
 	if err != nil {
-		return errors.WithStack(err)
+		return err
 	}
 
 	client.Channel <- payload

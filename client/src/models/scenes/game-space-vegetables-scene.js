@@ -1,6 +1,6 @@
 import {Actions, Geom, Math as PhaserMath, Scene} from 'phaser'
 import Laser from '../sprites/laser'
-import lodash from 'lodash'
+import { throttle } from 'lodash-es'
 import SceneKeys from '../../constants/scene-keys'
 import SceneUtils from './scene-utils'
 import Spaceship from '../sprites/spaceship'
@@ -91,7 +91,7 @@ export default class GameSpaceVegetablesScene extends Scene {
       this.spaceship.setPosition(x, y)
     }, this)
 
-    this.throttledCreateLaser = lodash.throttle(
+    this.throttledCreateLaser = throttle(
         (pointer) =>this.laserGroup.add(new Laser(this, this.spaceship.x, this.spaceship.y, this.locateFromMiddle(Math.max(100, Math.min(500, pointer.x))).angle, 'laser')),
         400
     )

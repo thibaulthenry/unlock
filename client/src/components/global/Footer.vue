@@ -1,120 +1,45 @@
 <template>
-  <v-footer
-      color="grey darken-2"
-      height="80px"
-  >
-    <v-row
-        justify="center"
-        no-gutters
-    >
+  <v-footer class="dungeon-footer" height="80px">
+    <v-row justify="center" no-gutters>
       <v-btn
-          href="https://github.com/thibaulthenry/unlock"
+          v-for="link in links"
+          :key="link.icon"
+          :href="link.href"
+          :to="link.to"
           target="_blank"
-          color="white"
-          text
+          color="primary"
+          variant="text"
           rounded
-          dark
       >
-        <v-icon>
-          mdi-github
-        </v-icon>
+        <v-icon>{{ link.icon }}</v-icon>
       </v-btn>
 
-      <v-btn
-          href="https://discord.gg/73xCehtWsK"
-          target="_blank"
-          color="white"
-          text
-          rounded
-          dark
-      >
-        <v-icon>
-          mdi-discord
-        </v-icon>
-      </v-btn>
-
-      <v-btn
-          href="https://twitter.com/UnlockWebGame"
-          target="_blank"
-          color="white"
-          text
-          rounded
-          dark
-      >
-        <v-icon>
-          mdi-twitter
-        </v-icon>
-      </v-btn>
-
-      <v-btn
-          href="https://www.facebook.com/UnlockWebGame"
-          target="_blank"
-          color="white"
-          text
-          rounded
-          dark
-      >
-        <v-icon>
-          mdi-facebook
-        </v-icon>
-      </v-btn>
-
-      <v-btn
-          href="https://www.instagram.com/unlockwebgame"
-          target="_blank"
-          color="white"
-          text
-          rounded
-          dark
-      >
-        <v-icon>
-          mdi-instagram
-        </v-icon>
-      </v-btn>
-
-      <v-btn
-          href="https://www.reddit.com/r/UnlockWebGame"
-          target="_blank"
-          color="white"
-          text
-          rounded
-          dark
-      >
-        <v-icon>
-          mdi-reddit
-        </v-icon>
-      </v-btn>
-
-      <v-btn
-          to="/about"
-          color="white"
-          text
-          rounded
-          dark
-      >
-        <v-icon>
-          mdi-help-circle
-        </v-icon>
-      </v-btn>
-
-      <v-col
-          class="d-flex justify-center align-center white--text mt-1"
-          cols="12"
-      >
-        <img src="../../assets/images/4k.png" alt="logo" width="35px"/>
+      <v-col class="d-flex justify-center align-center mt-1 dungeon-subtitle" cols="12">
+        <img :src="logo" alt="logo" width="35px" class="dungeon-torch-glow"/>
         <span class="ml-2 mr-2">
           {{ new Date().getFullYear() }} — <strong>4K Games</strong>
         </span>
-        <img src="../../assets/images/4k.png" alt="logo" width="35px"/>
+        <img :src="logo" alt="logo" width="35px" class="dungeon-torch-glow"/>
       </v-col>
     </v-row>
   </v-footer>
 </template>
 
 <script>
-export default {}
+import logo from '@/assets/images/4k.png'
+
+export default {
+  data: () => ({
+    logo,
+    links: [
+      { icon: 'mdi-github',      href: 'https://github.com/thibaulthenry/unlock' },
+      { icon: 'mdi-discord',     href: 'https://discord.gg/73xCehtWsK' },
+      { icon: 'mdi-twitter',     href: 'https://twitter.com/UnlockWebGame' },
+      { icon: 'mdi-facebook',    href: 'https://www.facebook.com/UnlockWebGame' },
+      { icon: 'mdi-instagram',   href: 'https://www.instagram.com/unlockwebgame' },
+      { icon: 'mdi-reddit',      href: 'https://www.reddit.com/r/UnlockWebGame' },
+      { icon: 'mdi-help-circle', to: '/about' },
+    ],
+  }),
+}
 </script>
-
-<style scoped>
-
-</style>

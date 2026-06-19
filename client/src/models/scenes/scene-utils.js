@@ -1,4 +1,5 @@
-import store from '../../services/store';
+import SpriteColors from '@/constants/sprite-colors'
+import store from '@/services/store'
 
 export default {
   createBackground(scene, key, texture, count, scrollFactorX, scrollFactorY, depth) {
@@ -43,7 +44,20 @@ export default {
     }
   },
 
-  updateMap(copiedMap, updatedMap, createSprite) {
+  // Charge l'ensemble des spritesheets d'axolotls (un par sprite color).
+  // Utilisé par les scènes qui rendent dynamiquement plusieurs joueurs
+  // (Floating Islands notamment).
+  preloadAxolotls(scene) {
+    for (const color of SpriteColors) {
+      scene.load.spritesheet(
+          `axolotl-${color}`,
+          `../assets/sprites/axolotls/axolotl-${color}.png`,
+          { frameWidth: 100, frameHeight: 86 },
+      )
+    }
+  },
+
+  updateMap(copiedMap, updatedMap, createSpriteFunction, createSpritePredicate) {
     let safeCopiedMap = new Map()
 
     if (copiedMap instanceof Map) {
@@ -56,19 +70,26 @@ export default {
 
     for (let key of updatedMap.keys()) {
       if (!safeCopiedMap.has(key)) {
-        const value = updatedMap.get(key)
-        value.destroy()
+        updatedMap.get(key).destroy()
         updatedMap.delete(key)
       }
     }
 
     safeCopiedMap.forEach((value, key) => {
-      if (!updatedMap.has(key)) {
-        updatedMap.set(key, createSprite(value))
+      if (createSpritePredicate && !createSpritePredicate(key)) {
+        return
+      }
+
+      if (updatedMap.has(key)) {
+        updatedMap.get(key).alpha = value.focus === false ? 0.5 : 1
+      } else {
+        updatedMap.set(key, createSpriteFunction(value))
       }
     })
   },
 
+  // Ancienne API utilisée par lobby-scene et pre-game-scene : pas de filtre,
+  // pas d'effet de focus, seulement create/destroy sur diff.
   updateSprites(spritesMap, createSprite) {
     const lobby = store.state.lobby
 
@@ -76,5 +97,16 @@ export default {
       const lobbyPlayersMap = lobby.getPlayersMap()
       this.updateMap(lobbyPlayersMap, spritesMap, createSprite)
     }
-  }
+  },
+
+  // Nouvelle API utilisée par Floating Islands : un prédicat de création
+  // (par uuid) et un prédicat de filtrage des joueurs (par player).
+  updatePlayersSprites(spritesMap, createSpriteFunction, createSpritePredicate, playersFilterPredicate) {
+    const lobby = store.state.lobby
+
+    if (lobby) {
+      const lobbyPlayersMap = lobby.getPlayersMap(playersFilterPredicate)
+      this.updateMap(lobbyPlayersMap, spritesMap, createSpriteFunction, createSpritePredicate)
+    }
+  },
 }

@@ -2,7 +2,6 @@ package models
 
 import (
 	"encoding/json"
-	"github.com/pkg/errors"
 	"unlock/constants"
 )
 
@@ -15,7 +14,7 @@ func HandlePacket(client *Client, payload []byte) (err error) {
 
 	err = json.Unmarshal(payload, &packet)
 	if err != nil {
-		return errors.WithStack(err)
+		return err
 	}
 
 	switch packet.Label {
@@ -25,7 +24,17 @@ func HandlePacket(client *Client, payload []byte) (err error) {
 
 		err = json.Unmarshal(payload, &packet)
 		if err != nil {
-			return errors.WithStack(err)
+			return err
+		}
+
+		return packet.Receive(client)
+
+	case constants.PacketClientFocus:
+		var packet PacketClientFocus
+
+		err = json.Unmarshal(payload, &packet)
+		if err != nil {
+			return err
 		}
 
 		return packet.Receive(client)
@@ -35,7 +44,67 @@ func HandlePacket(client *Client, payload []byte) (err error) {
 
 		err = json.Unmarshal(payload, &packet)
 		if err != nil {
-			return errors.WithStack(err)
+			return err
+		}
+
+		return packet.Receive(client)
+
+	case constants.PacketClientSceneBrawlBombHit:
+		var packet PacketClientSceneBrawlBombHit
+
+		err = json.Unmarshal(payload, &packet)
+		if err != nil {
+			return err
+		}
+
+		return packet.Receive(client)
+
+	case constants.PacketClientSceneBrawlDodge:
+		var packet PacketClientSceneBrawlDodge
+
+		err = json.Unmarshal(payload, &packet)
+		if err != nil {
+			return err
+		}
+
+		return packet.Receive(client)
+
+	case constants.PacketClientSceneBrawlPunch:
+		var packet PacketClientSceneBrawlPunch
+
+		err = json.Unmarshal(payload, &packet)
+		if err != nil {
+			return err
+		}
+
+		return packet.Receive(client)
+
+	case constants.PacketClientSceneFloatingIslandsCollide:
+		var packet PacketClientSceneFloatingIslandCollide
+
+		err = json.Unmarshal(payload, &packet)
+		if err != nil {
+			return err
+		}
+
+		return packet.Receive(client)
+
+	case constants.PacketClientSceneFloatingIslandsFall:
+		var packet PacketClientSceneFloatingIslandFall
+
+		err = json.Unmarshal(payload, &packet)
+		if err != nil {
+			return err
+		}
+
+		return packet.Receive(client)
+
+	case constants.PacketClientSceneHotPotatoTag:
+		var packet PacketClientSceneHotPotatoTag
+
+		err = json.Unmarshal(payload, &packet)
+		if err != nil {
+			return err
 		}
 
 		return packet.Receive(client)
@@ -45,7 +114,7 @@ func HandlePacket(client *Client, payload []byte) (err error) {
 
 		err = json.Unmarshal(payload, &packet)
 		if err != nil {
-			return errors.WithStack(err)
+			return err
 		}
 
 		return packet.Receive(client)
@@ -55,7 +124,7 @@ func HandlePacket(client *Client, payload []byte) (err error) {
 
 		err = json.Unmarshal(payload, &packet)
 		if err != nil {
-			return errors.WithStack(err)
+			return err
 		}
 
 		return packet.Receive(client)
@@ -65,7 +134,7 @@ func HandlePacket(client *Client, payload []byte) (err error) {
 
 		err = json.Unmarshal(payload, &packet)
 		if err != nil {
-			return errors.WithStack(err)
+			return err
 		}
 
 		return packet.Receive(client)

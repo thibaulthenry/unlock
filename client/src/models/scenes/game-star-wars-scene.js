@@ -49,14 +49,29 @@ export default class GameStarWarsScene extends Scene {
     this.spaceshipMap.set(store.state.client.uuid, this.spaceship)
     this.starGroup = this.physics.add.group()
 
+    // Set des UUID déjà signalés au serveur dans CE round, pour éviter
+    // l'effet "overlap qui tire à chaque frame" et la double-collection
+    // qui empêchait l'étoile de disparaître côté client.
+    this.collectedStars = new Set()
+
     // Physics
 
     this.physics.world.setBounds(0, 0, this.sceneWidth, this.sceneHeight)
     this.noMotion = {direction: false, jumping: false, walking: false}
 
     this.physics.world.addOverlap(this.spaceship, this.starGroup, (spaceshipGameObject, starGameObject) => {
+      const uuid = starGameObject.getData('uuid')
+      if (!uuid || this.collectedStars.has(uuid)) return
+      this.collectedStars.add(uuid)
+      // Cache immédiatement le sprite : si le serveur tarde à confirmer,
+      // au moins l'étoile disparait visuellement et on ne retire pas
+      // au radar côté joueur.
+      starGameObject.setVisible(false)
+      if (starGameObject.body && starGameObject.body.checkCollision) {
+        starGameObject.body.checkCollision.none = true
+      }
       // noinspection JSIgnoredPromiseFromCall
-      store.dispatch('sendPacket', new PacketClientSceneStarWarsCollect(starGameObject.getData('uuid')))
+      store.dispatch('sendPacket', new PacketClientSceneStarWarsCollect(uuid))
     })
 
     // Camera
@@ -201,13 +216,24 @@ export default class GameStarWarsScene extends Scene {
   }
 
   updateStarSprites(packet) {
-    if (packet && packet.data && packet.data.stars) {
-      SceneUtils.updateMap(packet.data.stars, this.starMap, (star) => {
-        const sprite = new Star(this, star.coordinates.x, star.coordinates.y, 'star')
-        sprite.setData('uuid', star.uuid)
-        this.starGroup.add(sprite)
-        return sprite
-      })
+    if (!packet || !packet.data) return
+    // packet.data.stars peut être null/undefined si le serveur n'a plus
+    // d'étoile actuellement : on traite alors comme un objet vide pour
+    // forcer la destruction des sprites résiduels côté client.
+    const stars = packet.data.stars || {}
+    SceneUtils.updateMap(stars, this.starMap, (star) => {
+      const sprite = new Star(this, star.coordinates.x, star.coordinates.y, 'star')
+      sprite.setData('uuid', star.uuid)
+      this.starGroup.add(sprite)
+      return sprite
+    })
+    // Nettoie les uuid collectés qui ne sont plus dans la map serveur
+    // (sinon le Set grandit indéfiniment, et un nouvel uuid réutilisé
+    // par hasard serait ignoré).
+    if (this.collectedStars) {
+      for (const uuid of this.collectedStars) {
+        if (!stars[uuid]) this.collectedStars.delete(uuid)
+      }
     }
   }
 

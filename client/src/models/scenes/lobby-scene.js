@@ -1,7 +1,7 @@
 import {Input, Scene} from 'phaser'
 import Axolotl from '../sprites/axolotl'
 import Cage from '../sprites/cage'
-import lodash from 'lodash'
+import { throttle } from 'lodash-es'
 import PacketClientSceneMovement from '../packets/packet-client-scene-movement'
 import PacketLabels from '../../constants/packet-labels'
 import PacketServerLobbyCollapse from '../packets/packet-server-lobby-collapse'
@@ -135,7 +135,7 @@ export default class LobbyScene extends Scene {
 
     // Inputs
 
-    this.throttledUpdatePlayersSprites = lodash.throttle(this.updatePlayersSprites, 500)
+    this.throttledUpdatePlayersSprites = throttle(this.updatePlayersSprites, 500)
     this.cursors = this.input.keyboard.createCursorKeys()
     this.cursors.KeyA = this.input.keyboard.addKey(Input.Keyboard.KeyCodes.A);
     this.cursors.KeyQ = this.input.keyboard.addKey(Input.Keyboard.KeyCodes.Q);
